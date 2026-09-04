@@ -20,6 +20,7 @@ const TEMAS = [
   ["renda", "Renda e trabalho"],
   ["historico", "Série histórica"],
   ["territorio", "Território"],
+  ["barragens", "Barragens e rompimento"],
 ];
 
 const num = (v, casas = 0) => v == null || Number.isNaN(v) ? "—" :
@@ -340,6 +341,58 @@ function mapa(pai, destaque) {
 
   legenda(pai, [["Estabelecimento de saúde que atende pelo SUS", CORES.verde],
                 ["Estabelecimento que não atende pelo SUS", CORES.texto3]]);
+  return s;
+}
+
+function mapaBarragens(pai) {
+  const r = DADOS.rompimento;
+  const altura = 360;
+  const s = svg(pai, altura);
+  const projecao = d3.geoMercator().fitExtent([[14, 14], [L - 14, altura - 14]], GEO);
+  const caminho = d3.geoPath(projecao);
+
+  s.append("clipPath").attr("id", "recorte-barragens").append("rect")
+    .attr("x", 0).attr("y", 0).attr("width", L).attr("height", altura);
+
+  s.selectAll("path").data(GEO.features).join("path")
+    .attr("d", caminho)
+    .attr("fill", d => d.properties.alvo ? (CORDIST[d.properties.nm_dist] || CORES.azul) : "#e2e0d6")
+    .attr("fill-opacity", d => d.properties.alvo ? 0.22 : 1)
+    .attr("stroke", "#fff").attr("stroke-width", 1.6)
+    .on("mousemove", (e, d) => mostrarDica(e, `<b>${d.properties.nm_dist}</b><br>${num(d.properties.populacao)} pessoas`))
+    .on("mouseleave", esconderDica);
+
+  s.selectAll("text.dist").data(GEO.features).join("text").attr("class", "dist")
+    .attr("x", d => caminho.centroid(d)[0]).attr("y", d => caminho.centroid(d)[1])
+    .attr("text-anchor", "middle").attr("font-size", 10.5).attr("fill", CORES.texto2)
+    .attr("pointer-events", "none").text(d => d.properties.nm_dist);
+
+  const g = s.append("g").attr("clip-path", "url(#recorte-barragens)");
+  const corEmergencia = e => e === "Sem emergência" ? CORES.texto3
+    : (e === "Emergência Nivel 1" ? CORES.amarelo : CORES.vermelho);
+
+  // local da mina que rompeu, marcado pelo centroide das estruturas que restaram
+  const mina = r.barragens.mina_feijao;
+  const pm = projecao([mina.lon, mina.lat]);
+  g.append("path").attr("transform", `translate(${pm[0]},${pm[1]})`)
+    .attr("d", d3.symbol().type(d3.symbolCross).size(150)())
+    .attr("fill", CORES.vermelho).attr("stroke", "#fff").attr("stroke-width", 1)
+    .attr("transform", `translate(${pm[0]},${pm[1]}) rotate(45)`)
+    .on("mousemove", e => mostrarDica(e, "<b>Mina Córrego do Feijão</b><br>Posição aproximada, pelo centroide das " +
+      `${mina.estruturas} estruturas que restam no cadastro da ANM<br>A barragem B1 rompeu em 25/01/2019`))
+    .on("mouseleave", esconderDica);
+
+  g.selectAll("circle").data(r.barragens.pontos).join("circle")
+    .attr("cx", d => projecao([d.lon, d.lat])[0]).attr("cy", d => projecao([d.lon, d.lat])[1])
+    .attr("r", d => d.emergencia === "Sem emergência" ? 3.5 : 5)
+    .attr("fill", d => corEmergencia(d.emergencia))
+    .attr("fill-opacity", 0.9).attr("stroke", "#fff").attr("stroke-width", 0.8)
+    .on("mousemove", (e, d) => mostrarDica(e,
+      `<b>${d.nome}</b><br>${d.mina || "sem mina informada"}<br>${d.distrito}<br>${d.emergencia}<br>${d.situacao}`))
+    .on("mouseleave", esconderDica);
+
+  legenda(pai, [["Sem emergência", CORES.texto3], ["Emergência nível 1", CORES.amarelo],
+                ["Emergência nível 2", CORES.vermelho], ["Mina Córrego do Feijão", CORES.vermelho]]);
   return s;
 }
 
@@ -732,6 +785,137 @@ function painelComparacao(pai) {
     { rotulos: true });
 }
 
+function painelRompimento(pai) {
+  const r = DADOS.rompimento;
+  const nomes = DADOS.distritos;
+
+  pai.append("h2").attr("class", "secao").text("O rompimento da barragem e estes distritos");
+  pai.append("p").attr("class", "secao-sub").html(
+    "Em <strong>25 de janeiro de 2019</strong> a barragem B1 da Mina Córrego do Feijão, da Vale, rompeu em Brumadinho. " +
+    "Esta aba reúne o que as fontes deste projeto conseguem dizer sobre a relação entre esse evento e os dois distritos — e, " +
+    "com o mesmo cuidado, o que elas não dizem.");
+
+  pai.append("div").attr("class", "aviso").html(
+    "<strong>O que estes dados não permitem afirmar.</strong> Nenhuma fonte usada aqui traz causa de morte, " +
+    "lista de vítimas por distrito ou a mancha de rejeito. O Censo registra o semestre do falecimento, não a causa; " +
+    "o cadastro da ANM traz a situação das barragens hoje, não o que houve em 2019; a RAIS registra vínculos formais, " +
+    "não o motivo de sua criação ou fim. Tudo abaixo é <em>contexto mensurável</em>, e cada gráfico diz de onde vem e o que mede. " +
+    "Correlação de datas não é prova de causa.");
+
+  // Distancia
+  const distancias = r.distancias.map(d => ({ rotulo: d.distrito, valor: d.km, pct: d.km }));
+  barrasHorizontais(bloco(pai, "barragens", "Distância da mina até cada distrito",
+    "Quilômetros em linha reta da mina até a borda mais próxima de cada distrito",
+    "Coordenadas das estruturas remanescentes da Mina Córrego do Feijão no cadastro da ANM e malha do Censo 2022 (IBGE). " +
+    "É distância geométrica: não representa o caminho do rejeito, que desceu o córrego do Ferro-Carvão até o rio Paraopeba."),
+    distancias,
+    { cor: d => nomes.includes(d.rotulo) ? CORDIST[d.rotulo] : CORES.neutro, campo: "valor",
+      formato: d => num(d.valor, 1) + " km", margemEsq: 190,
+      dica: d => `<b>${d.rotulo}</b><br>${num(d.valor, 1)} km da mina` });
+
+  mapaBarragens(bloco(pai, "barragens", "As barragens de mineração em Brumadinho hoje",
+    `${num(r.barragens.total)} estruturas cadastradas, ${num(r.barragens.em_emergencia)} em nível de emergência`,
+    "Cadastro Nacional de Barragens de Mineração (ANM), cruzado com a malha do Censo 2022. A B1 que rompeu não está no " +
+    "cadastro: o que aparece da mesma mina são as estruturas remanescentes, todas em descaracterização."));
+
+  const emergencia = Object.entries(r.barragens.por_distrito)
+    .filter(([, v]) => v.em_emergencia > 0)
+    .map(([distrito, v]) => ({ distrito, ...v }));
+  if (emergencia.length) {
+    destaque(pai, "barragens",
+      "<strong>Todas as barragens hoje sob declaração de emergência em Brumadinho estão em " +
+      emergencia.map(e => e.distrito).join(" e ") + "</strong> — " +
+      emergencia.map(e => `${e.em_emergencia} das ${e.total} cadastradas no distrito`).join(", ") +
+      ". Segundo o próprio cadastro, há pessoas ocupando permanentemente a área a jusante delas.");
+  }
+
+  nomes.forEach(nome => {
+    const b = r.barragens.por_distrito[nome];
+    const blocoDistrito = bloco(pai, "barragens", `Barragens em ${nome}`,
+      b ? `${num(b.total)} estruturas cadastradas` : null,
+      "Cadastro Nacional de Barragens de Mineração (ANM), competência do arquivo aberto mais recente.");
+    if (!b || !b.lista.length) {
+      blocoDistrito.append("p").attr("class", "vazio").text("Nenhuma barragem de mineração cadastrada neste distrito.");
+      return;
+    }
+    tabela(blocoDistrito,
+      [{ rotulo: "Barragem", num: false }, { rotulo: "Empreendedor", num: false },
+       { rotulo: "Emergência", num: false }, { rotulo: "Dano potencial", num: false },
+       { rotulo: "Método construtivo", num: false }, { rotulo: "População a jusante", num: false }],
+      b.lista.map(x => [x.nome, x.empreendedor, x.emergencia, x.dano, x.metodo, x.jusante]));
+  });
+
+  // Obitos
+  secao(pai, "barragens", "Óbitos declarados no Censo, por semestre",
+    "O rompimento foi no 1º semestre de 2019, dentro da janela que o Censo 2022 perguntou (jan/2019 a jul/2022).");
+  nomes.forEach(nome => {
+    const ob = DADOS.por_distrito[nome].obitos;
+    colunas(bloco(pai, "barragens", `Óbitos por semestre — ${nome}`,
+      `${num(ob.domicilios_com_obito)} domicílios declararam ao menos um óbito no período`,
+      "Variáveis V01264–V01270, arquivo 'obitos' do Censo 2022. O Censo pergunta se alguém que morava no domicílio faleceu " +
+      "e em que semestre — não a causa nem o local. A segunda onda da covid-19 também cai nesta série, no 1º semestre de 2021."),
+      ob.por_periodo.map(p => ({ rotulo: p.periodo, valor: p.valor })), CORDIST[nome],
+      { corPorItem: p => p.rotulo === "1º sem. 2019" ? CORES.vermelho : CORDIST[nome] });
+  });
+
+  // Agua
+  secao(pai, "barragens", "De onde vem a água dos domicílios",
+    "O rejeito atingiu o córrego do Ferro-Carvão e o rio Paraopeba. Quem depende de água superficial fica mais exposto a " +
+    "contaminação de curso d'água do que quem está na rede geral.");
+  empilhada100(bloco(pai, "barragens", "Fonte de abastecimento de água", "% dos domicílios particulares permanentes ocupados, 2022",
+    "Variáveis V00111–V00118, arquivo 'caracteristicas_domicilio2' do Censo 2022."),
+    nomes.map(n => ({ nome: n, partes: r.agua[n].partes })));
+
+  const semSuperficial = nomes.filter(n => r.agua[n].superficial_pct === 0);
+  if (semSuperficial.length === nomes.length) {
+    destaque(pai, "barragens",
+      "<strong>Nenhum domicílio dos dois distritos declarou tirar água de rio, açude, córrego ou lago em 2022.</strong> " +
+      "Quem está fora da rede geral usa poço ou nascente — em São José do Paraopeba são " +
+      `${pct(r.agua["São José do Paraopeba"].fora_da_rede_pct)} dos domicílios, quase todos poço profundo. ` +
+      "O Censo não diz se esses poços foram testados, então isto delimita a exposição a água de superfície, não a subterrânea.");
+  }
+
+  // Saude
+  secao(pai, "barragens", "O que mudou no cadastro de saúde depois de 2019",
+    "Datas de ativação das equipes que hoje estão ativas no CNES. Equipes desativadas desde então não aparecem, " +
+    "então a série mostra o que restou, não tudo o que foi criado.");
+  colunas(bloco(pai, "barragens", "Equipes de saúde ativas hoje, por ano de ativação",
+    "Cada barra é o número de equipes hoje ativas que foram cadastradas naquele ano",
+    "Campo DT_ATIVACAO da tabela de equipes da base do CNES, competência 07/2026."),
+    r.equipes_por_ano.map(e => ({ rotulo: String(e.ano), valor: e.valor })), CORES.azul,
+    { corPorItem: e => e.rotulo === "2019" ? CORES.vermelho : CORES.azul });
+
+  if (r.saude_mental.length) {
+    const anos = [...new Set(r.saude_mental.map(e => e.ano))].sort();
+    destaque(pai, "barragens",
+      `<strong>As ${num(r.saude_mental.length)} equipes de saúde mental de Brumadinho foram cadastradas em ${anos.join(" e ")}</strong>` +
+      " — o ano do rompimento. São equipes multiprofissionais de atenção especializada em saúde mental, sediadas no ambulatório " +
+      "de especialidades, na sede do município. O cadastro registra a data de ativação, não o motivo.");
+  }
+
+  // Emprego
+  if (r.emprego_extrativa.length) {
+    secao(pai, "barragens", "Emprego formal na mineração, antes e depois",
+      "Vínculos formais em Brumadinho na seção B da CNAE (indústrias extrativas). É dado municipal: a RAIS não desce a distrito. " +
+      "Ao contrário do que se poderia supor, o emprego formal do município cresceu depois de 2019.");
+    barrasAgrupadas(bloco(pai, "barragens", "Vínculos formais em Brumadinho",
+      "Indústrias extrativas e total do município",
+      "DataViva / Cedeplar-UFMG, a partir da RAIS. As categorias de sexo e cor/raça se sobrepõem no arquivo de origem; " +
+      "o total usa o corte por sexo, que é o único que cobre todos os vínculos. O emprego formal do município não caiu depois " +
+      "do rompimento: subiu em 2019 e chegou ao pico em 2022. A RAIS registra o vínculo, não o motivo de ele existir, então " +
+      "não dá para separar aqui o que é obra de reparação, o que é mineração em outras minas e o que é outra coisa."),
+      r.emprego_extrativa.map(e => String(e.ano)),
+      [{ nome: "Indústrias extrativas", cor: CORES.vermelho, valores: r.emprego_extrativa.map(e => e.extrativa) },
+       { nome: "Total do município", cor: CORES.neutro, valores: r.emprego_extrativa.map(e => e.total) }],
+      { rotulos: true, altura: 320 });
+
+    colunas(bloco(pai, "barragens", "Peso da mineração no emprego formal",
+      "% dos vínculos formais de Brumadinho na seção B da CNAE",
+      "DataViva / Cedeplar-UFMG, a partir da RAIS."),
+      r.emprego_extrativa.map(e => ({ rotulo: String(e.ano), valor: +e.pct.toFixed(1) })), CORES.vermelho, { sufixo: "%" });
+  }
+}
+
 function painelMunicipio(pai) {
   const m = DADOS.municipio;
   pai.append("h2").attr("class", "secao").text("Contexto municipal — Brumadinho");
@@ -815,6 +999,7 @@ function montarFiltros() {
 function render() {
   const painel = d3.select("#painel").html("");
   if (ABA === "Comparação") painelComparacao(painel);
+  else if (ABA === "Rompimento da barragem") painelRompimento(painel);
   else if (ABA === "Contexto municipal") painelMunicipio(painel);
   else painelDistrito(painel, ABA);
   d3.selectAll("#abas button").attr("aria-current", function () { return this.textContent === ABA ? "true" : null; });
@@ -835,7 +1020,7 @@ Promise.all([
     if (Array.isArray(salvo) && salvo.length) ativos = new Set(salvo);
   } catch (e) { /* modo privado */ }
 
-  const abas = ["Comparação", ...dados.distritos, "Contexto municipal"];
+  const abas = ["Comparação", ...dados.distritos, "Rompimento da barragem", "Contexto municipal"];
   ABA = abas[0];
   d3.select("#abas").selectAll("button").data(abas).join("button")
     .text(x => x).on("click", (e, x) => { ABA = x; render(); });
