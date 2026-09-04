@@ -976,7 +976,14 @@ function aplicarFiltro() {
   d3.selectAll("#filtros button[data-tema]").attr("aria-pressed", function () {
     return ativos.has(this.dataset.tema) ? "true" : "false";
   });
-  try { localStorage.setItem("temas", JSON.stringify([...ativos])); } catch (e) { /* modo privado */ }
+  // Guarda tambem quais temas existiam quando o usuario escolheu: assim um tema
+  // novo entra ligado em vez de aparecer desligado para quem ja visitou o site.
+  try {
+    localStorage.setItem("temas", JSON.stringify({
+      ativos: [...ativos],
+      conhecidos: TEMAS.map(t => t[0]),
+    }));
+  } catch (e) { /* modo privado */ }
 }
 
 function montarFiltros() {
@@ -1017,7 +1024,14 @@ Promise.all([
   SETORES = setores;
   try {
     const salvo = JSON.parse(localStorage.getItem("temas") || "null");
-    if (Array.isArray(salvo) && salvo.length) ativos = new Set(salvo);
+    if (Array.isArray(salvo)) {
+      // formato antigo: so a lista de ativos, sem registro do que existia
+      if (salvo.length) ativos = new Set(salvo);
+    } else if (salvo && Array.isArray(salvo.ativos)) {
+      const conhecidos = new Set(salvo.conhecidos || []);
+      ativos = new Set(salvo.ativos);
+      TEMAS.forEach(([chave]) => { if (!conhecidos.has(chave)) ativos.add(chave); });
+    }
   } catch (e) { /* modo privado */ }
 
   const abas = ["Comparação", ...dados.distritos, "Rompimento da barragem", "Contexto municipal"];
