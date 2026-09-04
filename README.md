@@ -15,10 +15,11 @@ aba de comparação e uma de contexto municipal.
   dentro dos seus limites, para 1.388 moradores. Conceição de Itaguá tem 5.
 - **526 moradores de São José do Paraopeba se declararam quilombolas** — 37,9% do
   distrito. Em Conceição de Itaguá, nenhum.
-- Em Conceição de Itaguá, o **primeiro semestre de 2019 concentra 30% dos óbitos**
-  declarados nos três anos e meio da série. O rompimento da barragem da Mina Córrego do
-  Feijão foi em 25/01/2019, dentro dessa janela — mas o Censo registra o semestre do
-  falecimento, não a causa, então o dado não permite atribuir as mortes ao rompimento.
+- Em Conceição de Itaguá, os óbitos declarados se concentram em dois semestres: o
+  **1º de 2019 (34 de 115 com semestre informado)** e o **1º de 2021 (28)**. O
+  rompimento da barragem da Mina Córrego do Feijão foi em 25/01/2019 e a segunda onda
+  da covid-19 no Brasil em 2021 — mas o Censo registra o semestre do falecimento, não a
+  causa, então o dado não atribui as mortes a nenhum dos dois eventos.
 - No município, **22,6% dos empregos formais estão na indústria extrativa**, e o salário
   médio de um homem branco ou amarelo (R$ 5.036) é 63% maior que o de uma mulher preta,
   parda ou indígena (R$ 3.084).

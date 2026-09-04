@@ -263,10 +263,15 @@ function mapa(pai, destaque) {
     .attr("fill", d => {
       const nome = d.properties.nm_dist;
       if (nome === destaque) return CORDIST[nome] || CORES.azul;
-      return d.properties.alvo ? "#e8e7df" : "#f3f2ec";
+      return d.properties.alvo ? (CORDIST[nome] || CORES.azul) : "#e2e0d6";
     })
-    .attr("fill-opacity", d => d.properties.nm_dist === destaque ? 0.9 : 1)
-    .attr("stroke", "#fff").attr("stroke-width", 1.2)
+    // sem destaque, os dois distritos analisados aparecem na cor deles esmaecida;
+    // os outros ficam cinza, so como referencia geografica
+    .attr("fill-opacity", d => {
+      if (d.properties.nm_dist === destaque) return 1;
+      return d.properties.alvo ? 0.3 : 1;
+    })
+    .attr("stroke", "#fff").attr("stroke-width", 1.6)
     .on("mousemove", (e, d) => mostrarDica(e,
       `<b>${d.properties.nm_dist}</b><br>${num(d.properties.populacao)} pessoas<br>${num(d.properties.area_km2, 1)} km²`))
     .on("mouseleave", esconderDica);
@@ -275,7 +280,7 @@ function mapa(pai, destaque) {
     .attr("x", d => caminho.centroid(d)[0]).attr("y", d => caminho.centroid(d)[1])
     .attr("text-anchor", "middle").attr("font-size", 11)
     .attr("font-weight", d => d.properties.nm_dist === destaque ? 700 : 400)
-    .attr("fill", d => d.properties.nm_dist === destaque ? "#fff" : CORES.texto2)
+    .attr("fill", d => d.properties.nm_dist === destaque ? "#fff" : CORES.texto)
     .attr("pointer-events", "none")
     .text(d => d.properties.nm_dist);
 
@@ -412,10 +417,10 @@ function painelDistrito(pai, nome) {
      { nome: "Mulheres", cor: CORES.laranja, valores: ob.por_idade.map(f => f.mulheres) }]);
 
   colunas(bloco(grade3, "Óbitos por semestre",
-    "O rompimento da barragem da Mina Córrego do Feijão foi em 25/01/2019, dentro do primeiro semestre da série",
-    "Variáveis V01264–V01270, arquivo 'obitos'. O Censo registra o semestre do falecimento, não a causa: a série não permite atribuir mortes ao rompimento."),
+    "Dois eventos caem dentro da série: o rompimento da barragem da Mina Córrego do Feijão (25/01/2019) e a segunda onda da covid-19 (1º semestre de 2021)",
+    "Variáveis V01264–V01270, arquivo 'obitos'. O Censo registra o semestre do falecimento, não a causa: a série não permite atribuir mortes a nenhum dos dois eventos. A soma dos semestres é menor que o total de falecidos porque nem todo registro traz a data."),
     ob.por_periodo.map(p => ({ rotulo: p.periodo, valor: p.valor })), cor,
-    { corPorItem: p => p.rotulo === "1º sem. 2019" ? CORES.vermelho : cor });
+    { corPorItem: p => ["1º sem. 2019", "1º sem. 2021"].includes(p.rotulo) ? CORES.vermelho : cor });
 
   // Quilombolas
   if (d.quilombolas.total > 0) {
