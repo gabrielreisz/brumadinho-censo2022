@@ -4,11 +4,12 @@ Consolida os CSVs tratados num unico JSON que o site (site/) le com D3.
 O site e estatico: nao ha backend, entao todo recorte e calculo de percentual
 que dependeria de codigo servidor e feito aqui.
 
-Depende de ter rodado antes os scripts 01 a 07.
+Depende de ter rodado antes os scripts 01 a 12.
 
 Gera:
     site/dados/indicadores.json
     site/dados/distritos.geojson
+    site/dados/setores.geojson
 """
 
 from __future__ import annotations
@@ -216,6 +217,113 @@ def quilombolas(distrito: str) -> dict:
     }
 
 
+def escolas(distrito: str) -> dict:
+    """Censo Escolar do INEP. Aqui nao houve cruzamento geografico: os
+    microdados ja trazem o codigo do distrito."""
+    df = pd.read_csv(DIR_PROCESSED / "inep_escolas_brumadinho.csv")
+    sub = df[df["distrito"] == distrito]
+    ativas = sub[sub["situacao"] == "Em atividade"]
+    etapas = [
+        ("Educação infantil", "QT_MAT_INF"),
+        ("Fundamental — anos iniciais", "QT_MAT_FUND_AI"),
+        ("Fundamental — anos finais", "QT_MAT_FUND_AF"),
+        ("Ensino médio", "QT_MAT_MED"),
+    ]
+    infra = [
+        ("Água da rede pública", "IN_AGUA_REDE_PUBLICA"),
+        ("Esgoto em rede pública", "IN_ESGOTO_REDE_PUBLICA"),
+        ("Coleta de lixo", "IN_LIXO_SERVICO_COLETA"),
+        ("Internet", "IN_INTERNET"),
+        ("Biblioteca", "IN_BIBLIOTECA"),
+        ("Laboratório de informática", "IN_LABORATORIO_INFORMATICA"),
+        ("Quadra de esportes", "IN_QUADRA_ESPORTES"),
+        ("Alimentação", "IN_ALIMENTACAO"),
+    ]
+    return {
+        "total": int(len(sub)),
+        "ativas": int(len(ativas)),
+        "matriculas": float(ativas["QT_MAT_BAS"].fillna(0).sum()),
+        "por_etapa": [
+            {"rotulo": rotulo, "valor": float(ativas[col].fillna(0).sum())} for rotulo, col in etapas
+        ],
+        "infraestrutura": [
+            {"rotulo": rotulo,
+             "escolas": int(ativas[col].fillna(0).sum()),
+             "pct": 100 * float(ativas[col].fillna(0).sum()) / len(ativas) if len(ativas) else None}
+            for rotulo, col in infra
+        ],
+        "lista": [
+            {"nome": r["NO_ENTIDADE"], "dependencia": r["dependencia"], "localizacao": r["localizacao"],
+             "area_diferenciada": r["area_diferenciada"], "situacao": r["situacao"],
+             "matriculas": None if pd.isna(r["QT_MAT_BAS"]) else float(r["QT_MAT_BAS"])}
+            for _, r in sub.iterrows()
+        ],
+    }
+
+
+def saude_equipes(distrito: str) -> dict:
+    """Equipes e profissionais do CNES. 'sediadas' conta pela localizacao do
+    estabelecimento; 'atendem' inclui equipe sediada fora cuja area de
+    referencia cadastrada e o distrito."""
+    equipes = pd.read_csv(DIR_PROCESSED / "cnes_equipes_brumadinho.csv")
+    profissionais = pd.read_csv(DIR_PROCESSED / "cnes_profissionais_brumadinho.csv")
+    sediadas = equipes[equipes["distrito"] == distrito]
+    atendem = equipes[equipes["distrito_atendido"] == distrito]
+    prof = profissionais[profissionais["distrito"] == distrito]
+    return {
+        "equipes_sediadas": int(len(sediadas)),
+        "equipes_que_atendem": int(len(atendem)),
+        "profissionais": int(len(prof)),
+        "por_tipo_equipe": atendem["tipo_equipe"].value_counts().to_dict(),
+        "lista_equipes": [
+            {"tipo": r["tipo_equipe"], "referencia": r["NO_REFERENCIA"],
+             "estabelecimento": r["estabelecimento"], "sediada_em": r["distrito"],
+             "populacoes": r["populacoes_assistidas"] if isinstance(r["populacoes_assistidas"], str) else ""}
+            for _, r in atendem.iterrows()
+        ],
+        "por_ocupacao": prof["ocupacao"].value_counts().head(12).to_dict(),
+    }
+
+
+def serie_2010(distrito: str) -> list[dict]:
+    """Saneamento em 2010 e 2022 com definicoes equivalentes nos dois censos.
+    As categorias mudaram entre eles: so estes tres indicadores tem
+    correspondencia direta."""
+    df10 = pd.read_csv(DIR_PROCESSED / "censo2010_distritos.csv").set_index("distrito")
+    dom2 = _carregar("caracteristicas_domicilio2")
+
+    def pct2022(numerador: list[str], denominador: range) -> float:
+        base = sum(_num(dom2, distrito, f"V{n:05d}") for n in denominador)
+        return 100 * sum(_num(dom2, distrito, c) for c in numerador) / base if base else 0.0
+
+    linha = df10.loc[distrito]
+    return [
+        {"indicador": "Água da rede geral", "2010": float(linha["pct_agua_rede_geral"]),
+         "2022": pct2022(["V00111"], range(111, 119))},
+        {"indicador": "Esgoto em rede geral ou pluvial", "2010": float(linha["pct_esgoto_rede_geral"]),
+         "2022": pct2022(["V00309"], range(309, 317))},
+        {"indicador": "Lixo coletado", "2010": float(linha["pct_lixo_coletado"]),
+         "2022": pct2022(["V00397", "V00398"], range(397, 403))},
+    ]
+
+
+def renda_2010(distrito: str) -> list[dict]:
+    """Renda so existe por distrito no Censo 2010: em 2022 o tema saiu do
+    universo e foi para a amostra, publicada ate municipio."""
+    df = pd.read_csv(DIR_PROCESSED / "censo2010_distritos.csv").set_index("distrito")
+    rotulos = {
+        "renda_ate_1_8_sm": "Até 1/8 SM", "renda_1_8_a_1_4_sm": "1/8 a 1/4 SM",
+        "renda_1_4_a_1_2_sm": "1/4 a 1/2 SM", "renda_1_2_a_1_sm": "1/2 a 1 SM",
+        "renda_1_a_2_sm": "1 a 2 SM", "renda_2_a_3_sm": "2 a 3 SM",
+        "renda_3_a_5_sm": "3 a 5 SM", "renda_5_a_10_sm": "5 a 10 SM",
+        "renda_mais_10_sm": "Mais de 10 SM", "renda_sem_rendimento": "Sem rendimento",
+    }
+    linha = df.loc[distrito]
+    valores = [(rotulo, float(linha[coluna])) for coluna, rotulo in rotulos.items()]
+    total = sum(v for _, v in valores) or 1
+    return [{"rotulo": r, "valor": v, "pct": 100 * v / total} for r, v in valores]
+
+
 def saude_cnes() -> dict:
     df = pd.read_csv(DIR_PROCESSED / "cnes_estabelecimentos_brumadinho.csv")
     df["sus"] = df["estabelecimento_faz_atendimento_ambulatorial_sus"] == "SIM"
@@ -310,6 +418,10 @@ def gerar() -> dict:
                 "obitos": obitos(d),
                 "quilombolas": quilombolas(d),
                 "saude": saude["por_distrito"].get(d, {"total": 0, "sus": 0, "por_tipo": {}, "unidades_basicas": []}),
+                "saude_equipes": saude_equipes(d),
+                "escolas": escolas(d),
+                "serie_2010": serie_2010(d),
+                "renda_2010": renda_2010(d),
             }
             for d in DISTRITOS
         },
@@ -322,8 +434,10 @@ def gerar() -> dict:
     destino = DIR_SITE_DADOS / "indicadores.json"
     destino.write_text(json.dumps(dados, ensure_ascii=False), encoding="utf-8")
     shutil.copy(DIR_PROCESSED / "distritos_brumadinho.geojson", DIR_SITE_DADOS / "distritos.geojson")
+    shutil.copy(DIR_PROCESSED / "setores_distritos.geojson", DIR_SITE_DADOS / "setores.geojson")
     print(f"-> {destino} ({destino.stat().st_size/1024:.0f} KB)")
     print(f"-> {DIR_SITE_DADOS / 'distritos.geojson'}")
+    print(f"-> {DIR_SITE_DADOS / 'setores.geojson'}")
     return dados
 
 
