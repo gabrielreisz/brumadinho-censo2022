@@ -1,86 +1,125 @@
-# Brumadinho — Censo 2022 por distrito
+# Brumadinho — indicadores por distrito
 
-Pipeline de dados que recorta os indicadores do Censo 2022 (IBGE) para dois
-distritos específicos de Brumadinho-MG — **São José do Paraopeba** e
-**Conceição de Itaguá** — que não aparecem isolados em nenhum painel oficial
-(SIDRA e o IBGE Cidades só abrem até o nível de município). 
+Pipeline de dados que recorta indicadores públicos para dois distritos de Brumadinho-MG
+— **São José do Paraopeba** e **Conceição de Itaguá** — que não aparecem isolados em
+nenhum painel oficial (SIDRA e IBGE Cidades param no nível de município).
 
-## Como os dados foram tratados
+**Painel interativo:** https://gabrielreisz.github.io/brumadinho-censo2022/
 
-1. **Extração**: o Censo 2022 tem um produto específico chamado "Agregados
-   por Distrito" (`ftp.ibge.gov.br`), com um CSV por tema (demografia, cor
-   ou raça, alfabetização, saneamento, composição domiciliar etc.) cobrindo
-   todos os distritos do Brasil, mais um dicionário de variáveis em Excel
-   que traduz cada código de coluna (ex.: `V01009`) para o que ele significa.
+O painel tem uma aba por distrito, com os gráficos daquele distrito sozinho, mais uma
+aba de comparação e uma de contexto municipal.
 
-2. **Filtragem**: cada CSV bruto tem uma linha por distrito do país inteiro.
-   `src/01_processar_censo.py` filtra pelo código do distrito (`CD_DIST`)
-   para manter só os dois distritos-alvo, reduzindo cada arquivo a 2 linhas.
+## O que os dados mostram
 
-3. **Tratamento**: os arquivos do IBGE têm algumas particularidades que
-   precisam de ajuste manual — decimais gravados com vírgula
-   (`"118,8365656"`, que o pandas lê como texto), nomes de variável com
-   paddings diferentes entre abas do dicionário (`V0001` vs `V00001`), e
-   pequenas diferenças residuais em somas de sexo por causa da proteção de
-   confidencialidade do IBGE em setores pequenos.
+- **São José do Paraopeba não tem nenhum estabelecimento de saúde** cadastrado no CNES
+  dentro dos seus limites, para 1.388 moradores. Conceição de Itaguá tem 5.
+- **526 moradores de São José do Paraopeba se declararam quilombolas** — 37,9% do
+  distrito. Em Conceição de Itaguá, nenhum.
+- Em Conceição de Itaguá, o **primeiro semestre de 2019 concentra 30% dos óbitos**
+  declarados nos três anos e meio da série. O rompimento da barragem da Mina Córrego do
+  Feijão foi em 25/01/2019, dentro dessa janela — mas o Censo registra o semestre do
+  falecimento, não a causa, então o dado não permite atribuir as mortes ao rompimento.
+- No município, **22,6% dos empregos formais estão na indústria extrativa**, e o salário
+  médio de um homem branco ou amarelo (R$ 5.036) é 63% maior que o de uma mulher preta,
+  parda ou indígena (R$ 3.084).
 
-4. **Estruturação**: a maior parte dos dados fica em formato "largo" (uma
-   coluna por variável), que já serve para a maioria dos gráficos. Para a
-   pirâmide etária, `src/03_piramide_etaria.py` transforma esses dados em
-   formato "longo" (uma linha por distrito/sexo/faixa etária), que é o que
-   o Power BI usa bem para esse tipo de gráfico.
+## Fontes e como cada uma foi tratada
 
-5. **Visualização**: `src/04_graficos_analise.py` lê só os CSVs já tratados
-   em `data/processed/` e gera os gráficos, sem tocar nos dados brutos.
-   Cada gráfico cita a variável e o arquivo de origem no rodapé.
+### Censo 2022 — IBGE (nível distrito)
+
+O Censo tem um produto separado, "Agregados por Distrito", que já vem pré-agregado
+nesse nível. São 13 arquivos, um por tema, cobrindo todos os distritos do Brasil, mais
+um dicionário em Excel que traduz cada código de coluna (`V01009`) para o significado.
+
+1. **Filtragem** — cada CSV bruto tem uma linha por distrito do país. O
+   `01_processar_censo.py` filtra por `CD_DIST` e reduz cada arquivo a 2 linhas.
+2. **Dicionário** — o `02_gerar_dicionario.py` consolida as abas do Excel num CSV único,
+   normalizando o código da variável: o IBGE usa `V0001` (4 dígitos) no tema Básico e
+   `V00001`/`V01006` (5 dígitos) nos demais.
+3. **Ajustes do formato do IBGE** — decimais gravados com vírgula (`"118,8365656"`, que
+   o pandas lê como texto) e diferenças residuais de poucas unidades nas somas por sexo,
+   que vêm da proteção de confidencialidade em áreas pequenas.
+4. **Formato longo** — o `03_piramide_etaria.py` converte a demografia de "uma coluna por
+   combinação sexo/faixa" para "uma linha por distrito/sexo/faixa", que é o formato que
+   a pirâmide etária e o Power BI usam bem.
+
+### Malha territorial — IBGE (nível distrito)
+
+Shapefile de todos os distritos de MG. O `05_malha_distritos.py` recorta os 5 distritos
+de Brumadinho e grava um GeoJSON leve para o mapa do site.
+
+### CNES — Ministério da Saúde (nível distrito, por cruzamento)
+
+A API de dados abertos do CNES devolve os 143 estabelecimentos de Brumadinho com
+coordenadas, mas informa só município e bairro. O `06_cnes_saude.py` testa cada
+coordenada contra os polígonos da malha do IBGE (ray casting, sem geopandas) e é isso
+que transforma um dado municipal em dado distrital.
+
+### DataViva / Cedeplar-UFMG — RAIS (nível município)
+
+Emprego por setor, salário por escolaridade e salário por sexo e cor/raça. Os arquivos
+do DataViva cobrem o Brasil inteiro e chegam a 2 GB, então o `07_dataviva_brumadinho.py`
+lê em streaming, filtra linha a linha e para assim que passa do código de Brumadinho —
+de ~310 MB lidos sobram 1.170 linhas. **RAIS não desce abaixo de município**, então
+esses números aparecem numa aba separada no site, como contexto.
 
 ## Estrutura do repositório
 
 ```
-docs/01_mapeamento_extracao.md   documentação da etapa de mapeamento: onde
-                                  cada dado vem, códigos de distrito, o que
-                                  não existe no Censo nesse nível (renda,
-                                  saúde) e por quê
-download_censo2022.sh            baixa os arquivos brutos do IBGE
-requirements.txt                 dependências Python (pandas, pyarrow, openpyxl, matplotlib)
-src/config.py                    caminhos e constantes compartilhadas
-src/01_processar_censo.py        filtra os ZIPs brutos para os 2 distritos
+site/                            painel interativo em D3.js (publicado no GitHub Pages)
+  index.html, estilo.css, app.js
+  dados/                         JSON e GeoJSON gerados pelo pipeline
+src/config.py                    caminhos e códigos dos distritos
+src/01_processar_censo.py        filtra os ZIPs do Censo para os 2 distritos
 src/02_gerar_dicionario.py       consolida o dicionário de variáveis do IBGE
-src/03_piramide_etaria.py        formata os dados de demografia para a pirâmide etária
-src/04_graficos_analise.py       gera os gráficos em reports/figuras/
-data/raw/                        dados brutos baixados do IBGE (fora do git)
-data/processed/                  CSVs já filtrados e tratados, um por tema
-reports/figuras/                 gráficos gerados (PNG)
-powerbi/                         arquivos do dashboard (próxima etapa)
+src/03_piramide_etaria.py        converte a demografia para formato longo
+src/04_graficos_analise.py       gráficos estáticos em PNG (matplotlib)
+src/05_malha_distritos.py        shapefile do IBGE -> GeoJSON dos distritos
+src/06_cnes_saude.py             CNES + geometria -> estabelecimentos por distrito
+src/07_dataviva_brumadinho.py    RAIS/DataViva -> recorte de Brumadinho
+src/08_dados_site.py             consolida tudo no JSON que o site lê
+docs/01_mapeamento_extracao.md   o que existe e o que não existe por distrito (1ª rodada)
+docs/02_novas_fontes.md          SUS, DataViva, malha: o que entrou e por quê
+download_censo2022.sh            baixa os arquivos brutos do IBGE
+data/raw/                        dados brutos (fora do git, redownload pelo script)
+data/processed/                  CSVs filtrados e tratados, um por tema
+reports/figuras/                 gráficos estáticos em PNG
+powerbi/                         arquivos do dashboard
 ```
 
 ## Como rodar
 
 ```bash
-pip install -r requirements.txt --break-system-packages
+pip install -r requirements.txt
 
-bash download_censo2022.sh                # baixa os dados brutos do IBGE
-python src/01_processar_censo.py          # filtra para os 2 distritos
-python src/02_gerar_dicionario.py         # consolida o dicionário de variáveis
-python src/03_piramide_etaria.py          # formata dados da pirâmide etária
-python src/04_graficos_analise.py         # gera os gráficos em reports/figuras/
+bash download_censo2022.sh              # dados brutos do IBGE
+python src/01_processar_censo.py        # filtra para os 2 distritos
+python src/02_gerar_dicionario.py       # dicionário de variáveis
+python src/03_piramide_etaria.py        # formato longo da pirâmide
+python src/04_graficos_analise.py       # PNGs em reports/figuras/
+python src/05_malha_distritos.py        # GeoJSON dos distritos
+python src/06_cnes_saude.py             # estabelecimentos de saúde por distrito
+python src/07_dataviva_brumadinho.py    # RAIS/DataViva (baixa ~310 MB em streaming)
+python src/08_dados_site.py             # JSON do site
 ```
+
+Para ver o site localmente:
+
+```bash
+python -m http.server 8000 --directory site
+```
+
+O site é estático e sem build: HTML, CSS e um arquivo de JavaScript que carrega o D3 por
+CDN. Um push em `site/` republica pelo workflow em `.github/workflows/pages.yml`.
 
 ## Limitações conhecidas
 
-- **Renda**: o Censo 2022 não publica renda abaixo do nível municipal.
-- **Saúde**: não há indicador de saúde (mortalidade, cobertura de atenção
-  básica) no nível distrital nas fontes usadas aqui; os gráficos de
-  saneamento (água, esgoto, lixo) servem de proxy indireto.
-- **CadÚnico/IVCAD**: o Observatório do Cadastro Único público não permite
-  recorte por distrito, e a extração por família exigiria acesso
-  institucional ao CECAD 2.0 (fora do escopo deste projeto). O Observatório
-  público expõe um filtro por CRAS — Brumadinho tem três (Aranha, Centro,
-  Cohab) — que é uma via possível a explorar depois, mas a área de
-  cobertura de um CRAS não é exatamente igual à de um distrito.
-
-## Fontes
-
-- Censo Demográfico 2022 / IBGE — Agregados por Distrito (`ftp.ibge.gov.br`)
-- IBGE Cidades — painel Brumadinho (contexto municipal, não distrital)
-- Observatório do Cadastro Único / MDS (`paineis.mds.gov.br`)
+- **Renda por distrito não existe.** É dado da amostra do Censo, publicado só até
+  município. O painel mostra renda e salário numa aba municipal separada.
+- **Mortalidade por causa não existe por distrito.** O SIM/DATASUS registra município de
+  residência. A única mortalidade distrital é a contagem do Censo (jan/2019–jul/2022),
+  sem causa.
+- **Números pequenos.** São José do Paraopeba tem 1.388 moradores; em várias aberturas as
+  células ficam com poucas unidades e o IBGE aplica proteção de confidencialidade.
+  Percentuais sobre bases pequenas oscilam muito — leia as contagens absolutas junto.
+- **CadÚnico/IVCAD** continua sem recorte por distrito no painel público.
