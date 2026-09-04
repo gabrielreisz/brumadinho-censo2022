@@ -15,6 +15,10 @@ aba de comparação e uma de contexto municipal.
   dentro dos seus limites, para 1.388 moradores. Conceição de Itaguá tem 5.
 - **526 moradores de São José do Paraopeba se declararam quilombolas** — 37,9% do
   distrito. Em Conceição de Itaguá, nenhum.
+- O saneamento separa os dois distritos com folga: **0,6% dos domicílios de São José do
+  Paraopeba têm esgoto em rede geral, contra 74,0% em Conceição de Itaguá**. Lixo
+  coletado por serviço de limpeza: 51,6% contra 95,6%. Água da rede geral: 60,6% contra
+  90,6%.
 - Em Conceição de Itaguá, os óbitos declarados se concentram em dois semestres: o
   **1º de 2019 (34 de 115 com semestre informado)** e o **1º de 2021 (28)**. O
   rompimento da barragem da Mina Córrego do Feijão foi em 25/01/2019 e a segunda onda
