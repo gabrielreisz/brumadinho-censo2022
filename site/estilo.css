@@ -1,0 +1,91 @@
+:root {
+  --fundo: #fbfbf9;
+  --superficie: #ffffff;
+  --borda: #e4e3dc;
+  --texto: #14140f;
+  --texto-2: #55544e;
+  --texto-3: #8b8981;
+  --azul: #2a78d6;
+  --laranja: #eb6834;
+  --verde: #1baf7a;
+  --amarelo: #eda100;
+  --roxo: #4a3aa7;
+  --vermelho: #e34948;
+  --rosa: #e87ba4;
+  --neutro: #c6c5ba;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--fundo);
+  color: var(--texto);
+  font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.conteudo { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+
+.topo { padding: 44px 0 28px; border-bottom: 1px solid var(--borda); background: var(--superficie); }
+.sobrenome { margin: 0 0 6px; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--texto-3); }
+.topo h1 { margin: 0 0 12px; font-size: 30px; line-height: 1.2; letter-spacing: -.02em; }
+.chamada { margin: 0; max-width: 60ch; color: var(--texto-2); }
+
+.abas { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 18px; padding-bottom: 4px; }
+.abas button {
+  border: 1px solid var(--borda); background: var(--superficie); color: var(--texto-2);
+  padding: 8px 14px; border-radius: 999px; font: inherit; font-size: 14px; cursor: pointer;
+}
+.abas button:hover { border-color: var(--texto-3); }
+.abas button[aria-current="true"] { background: var(--texto); border-color: var(--texto); color: #fff; }
+
+main { padding-bottom: 60px; }
+
+.destaque {
+  margin: 22px 0 4px; padding: 16px 18px; border-radius: 12px;
+  background: #fff6ee; border: 1px solid #f3ddc9;
+}
+.destaque p { margin: 0; color: #6b4526; }
+.destaque strong { color: #52310f; }
+
+.cartoes { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 22px 0; }
+.cartao { background: var(--superficie); border: 1px solid var(--borda); border-radius: 12px; padding: 14px 16px; }
+.cartao .valor { font-size: 25px; font-weight: 700; letter-spacing: -.02em; }
+.cartao .rotulo { font-size: 12.5px; color: var(--texto-2); margin-top: 2px; }
+.cartao .nota { font-size: 11.5px; color: var(--texto-3); margin-top: 6px; }
+
+.grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(430px, 1fr)); gap: 16px; }
+@media (max-width: 720px) { .grade { grid-template-columns: 1fr; } }
+
+.bloco { background: var(--superficie); border: 1px solid var(--borda); border-radius: 12px; padding: 18px; margin: 16px 0; }
+.bloco h3 { margin: 0 0 3px; font-size: 16.5px; letter-spacing: -.01em; }
+.bloco .sub { margin: 0 0 14px; font-size: 13px; color: var(--texto-2); }
+.bloco .fonte { margin: 12px 0 0; font-size: 11.5px; color: var(--texto-3); }
+.bloco svg { display: block; width: 100%; height: auto; overflow: visible; }
+
+h2.secao { margin: 34px 0 6px; font-size: 20px; letter-spacing: -.02em; }
+p.secao-sub { margin: 0 0 4px; color: var(--texto-2); max-width: 72ch; }
+
+.legenda { display: flex; flex-wrap: wrap; gap: 10px 16px; margin-top: 12px; font-size: 12px; color: var(--texto-2); }
+.legenda span { display: inline-flex; align-items: center; gap: 6px; }
+.legenda i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+
+.tabela { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.tabela th { text-align: left; font-weight: 600; color: var(--texto-2); border-bottom: 1px solid var(--borda); padding: 7px 8px; }
+.tabela td { border-bottom: 1px solid var(--borda); padding: 7px 8px; }
+.tabela td.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+.vazio { color: var(--texto-2); font-size: 14px; padding: 8px 0; }
+
+.dica {
+  position: absolute; pointer-events: none; opacity: 0; transition: opacity .12s;
+  background: var(--texto); color: #fff; padding: 7px 10px; border-radius: 7px;
+  font-size: 12.5px; line-height: 1.4; max-width: 260px; z-index: 10;
+}
+
+.rodape { border-top: 1px solid var(--borda); padding-top: 20px; padding-bottom: 40px; font-size: 12.5px; color: var(--texto-3); }
+.rodape a { color: var(--texto-2); }
+.rodape p { margin: 0 0 8px; }
+
+text { font-family: inherit; }

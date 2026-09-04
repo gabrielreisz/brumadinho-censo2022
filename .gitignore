@@ -1,6 +1,9 @@
 # Dados brutos baixados do IBGE (grandes, redownload via download_censo2022.sh)
 data/raw/
 
+# Ambiente de teste do site
+node_modules/
+
 # Parquet derivado — redundante com os CSVs equivalentes, regenerável
 data/processed/*.parquet
 

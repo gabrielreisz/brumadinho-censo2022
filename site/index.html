@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brumadinho por distrito — Censo 2022, CNES e RAIS</title>
+<meta name="description" content="Indicadores sociais, demográficos e de saúde de São José do Paraopeba e Conceição de Itaguá, distritos de Brumadinho-MG.">
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+
+<header class="topo">
+  <div class="conteudo">
+    <p class="sobrenome">Brumadinho · Minas Gerais</p>
+    <h1>Dois distritos que nenhum painel oficial mostra separados</h1>
+    <p class="chamada">
+      SIDRA e IBGE Cidades param no nível de município. Este painel recorta o
+      Censo 2022, o cadastro de estabelecimentos de saúde (CNES/SUS) e a RAIS
+      para <strong>São José do Paraopeba</strong> e <strong>Conceição de Itaguá</strong>.
+    </p>
+  </div>
+</header>
+
+<nav class="abas conteudo" id="abas"></nav>
+
+<main class="conteudo" id="painel"></main>
+
+<footer class="conteudo rodape">
+  <p>
+    <strong>Fontes.</strong>
+    Censo Demográfico 2022 / IBGE — Agregados por Distrito e malha territorial
+    (<a href="https://ftp.ibge.gov.br/Censos/Censo_Demografico_2022/Agregados_por_Setores_Censitarios/">ftp.ibge.gov.br</a>) ·
+    CNES — API de dados abertos do Ministério da Saúde
+    (<a href="https://apidadosabertos.saude.gov.br/">apidadosabertos.saude.gov.br</a>) ·
+    DataViva / Cedeplar-UFMG, a partir da RAIS
+    (<a href="https://dataviva.info/">dataviva.info</a>) ·
+    IBGE Cidades, painel Brumadinho.
+  </p>
+  <p>
+    Cada gráfico traz a variável e o arquivo de origem. Código e dados tratados em
+    <a href="https://github.com/gabrielreisz/brumadinho-censo2022">github.com/gabrielreisz/brumadinho-censo2022</a>.
+  </p>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
