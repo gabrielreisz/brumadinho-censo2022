@@ -1,11 +1,8 @@
-# -*- coding: utf-8 -*-
 """
-02_gerar_dicionario.py
-=======================
-Lê o dicionário de dados oficial do IBGE (.xlsx baixado junto com os
-Agregados por Distrito) e consolida as abas relevantes num único CSV, com a
-coluna `variavel_num` normalizada — o IBGE usa `V0001` (4 dígitos) no tema
-Básico mas `V00001`/`V01006` (5 dígitos) nos demais temas.
+Consolida as abas relevantes do dicionário de dados do IBGE (.xlsx) num único CSV.
+
+A coluna `variavel_num` normaliza o código da variável porque o IBGE usa
+`V0001` (4 dígitos) no tema Básico e `V00001`/`V01006` (5 dígitos) nos demais.
 
 Uso:
     python src/02_gerar_dicionario.py
@@ -36,8 +33,7 @@ ABAS_COM_VARIAVEL = [
 
 
 def _numero_da_variavel(codigo: str) -> int | None:
-    """'V0001' -> 1, 'V01006' -> 1006 — remove zeros à esquerda para casar
-    códigos com paddings diferentes entre abas."""
+    """'V0001' -> 1, 'V01006' -> 1006."""
     if not isinstance(codigo, str):
         return None
     m = re.match(r"^[Vv](\d+)$", codigo.strip())
@@ -48,8 +44,7 @@ def gerar() -> pd.DataFrame:
     caminho = DIR_RAW_CENSO / NOME_ARQUIVO_DICIONARIO
     if not caminho.exists():
         raise FileNotFoundError(
-            f"Dicionário não encontrado em {caminho}. Baixe-o com "
-            f"download_censo2022.sh antes de rodar este script."
+            f"Dicionário não encontrado em {caminho}. Rode antes: bash download_censo2022.sh"
         )
 
     wb = openpyxl.load_workbook(caminho, read_only=True, data_only=True)

@@ -1,15 +1,10 @@
-# -*- coding: utf-8 -*-
 """
-01_processar_censo.py
-======================
-Lê os ZIPs do Censo 2022 (produto "Agregados por Distrito" do IBGE) em
-data/raw/censo2022/, filtra as linhas de São José do Paraopeba e Conceição
-de Itaguá (distritos de Brumadinho-MG) e grava CSV + Parquet em
-data/processed/.
+Lê os ZIPs do Censo 2022 (Agregados por Distrito, IBGE) em data/raw/censo2022/,
+filtra as linhas dos distritos-alvo e grava CSV + Parquet em data/processed/.
 
 Uso:
     python src/01_processar_censo.py --inspect   # só mostra as colunas
-    python src/01_processar_censo.py              # processa tudo
+    python src/01_processar_censo.py             # processa tudo
 """
 
 from __future__ import annotations
@@ -27,14 +22,12 @@ from config import DIR_PROCESSED, DIR_RAW_CENSO, DISTRITOS_ALVO
 CANDIDATOS_COL_CD_DIST = ["CD_DIST", "CD_DISTRITO", "COD_DISTRITO", "CD_DIST_CENSO"]
 CANDIDATOS_COL_CD_MUN = ["CD_MUN", "CD_MUNICIPIO", "COD_MUNICIPIO"]
 
-# Encoding/separador dos arquivos do IBGE variam por produto — tenta essas combinações
+# Encoding e separador variam entre os arquivos do IBGE
 ENCODING_TENTATIVAS = ["latin1", "utf-8", "cp1252"]
 SEP_TENTATIVAS = [";", ","]
 
 
 def _ler_csv_de_dentro_do_zip(caminho_zip: Path) -> dict[str, pd.DataFrame]:
-    """Abre um .zip do IBGE e lê todo CSV dentro dele, testando combinações
-    de encoding/separador até uma funcionar."""
     resultado: dict[str, pd.DataFrame] = {}
     with zipfile.ZipFile(caminho_zip) as zf:
         nomes_csv = [n for n in zf.namelist() if n.lower().endswith(".csv")]
@@ -69,7 +62,6 @@ def _ler_csv_de_dentro_do_zip(caminho_zip: Path) -> dict[str, pd.DataFrame]:
 
 
 def _achar_coluna(df: pd.DataFrame, candidatos: list[str]) -> str | None:
-    """Procura a primeira coluna que bate com algum nome candidato (case-insensitive)."""
     colunas_normalizadas = {c.strip().upper(): c for c in df.columns}
     for candidato in candidatos:
         if candidato.upper() in colunas_normalizadas:
@@ -78,8 +70,7 @@ def _achar_coluna(df: pd.DataFrame, candidatos: list[str]) -> str | None:
 
 
 def filtrar_distritos_alvo(df: pd.DataFrame, nome_origem: str) -> pd.DataFrame | None:
-    """Mantém só as linhas de Conceição de Itaguá e São José do Paraopeba,
-    adicionando a coluna 'distrito_alvo' com o nome amigável."""
+    """Mantém só as linhas dos distritos-alvo, adicionando a coluna 'distrito_alvo'."""
     col_cd_dist = _achar_coluna(df, CANDIDATOS_COL_CD_DIST)
 
     if col_cd_dist is not None:
@@ -93,9 +84,8 @@ def filtrar_distritos_alvo(df: pd.DataFrame, nome_origem: str) -> pd.DataFrame |
             )
         return filtrado
 
-    col_cd_mun = _achar_coluna(df, CANDIDATOS_COL_CD_MUN)
-    if col_cd_mun is not None:
-        print(f"  [info] {nome_origem} não tem coluna de distrito com 9 dígitos; sem fallback implementado para esse formato.")
+    if _achar_coluna(df, CANDIDATOS_COL_CD_MUN) is not None:
+        print(f"  [info] {nome_origem} não tem coluna de distrito com 9 dígitos; sem fallback para esse formato.")
         return None
 
     print(f"  [aviso] não encontrei coluna de distrito em {nome_origem}. Colunas disponíveis: {list(df.columns)}")
@@ -103,7 +93,6 @@ def filtrar_distritos_alvo(df: pd.DataFrame, nome_origem: str) -> pd.DataFrame |
 
 
 def inspecionar(zips: list[Path]) -> None:
-    """Modo --inspect: mostra as colunas de cada CSV sem processar nada."""
     for caminho_zip in zips:
         print(f"\n=== {caminho_zip.name} ===")
         tabelas = _ler_csv_de_dentro_do_zip(caminho_zip)
@@ -115,7 +104,6 @@ def inspecionar(zips: list[Path]) -> None:
 
 
 def processar(zips: list[Path]) -> None:
-    """Filtra cada arquivo para os 2 distritos-alvo e salva em data/processed/."""
     DIR_PROCESSED.mkdir(parents=True, exist_ok=True)
 
     for caminho_zip in zips:
@@ -145,13 +133,13 @@ def main() -> None:
 
     if not DIR_RAW_CENSO.exists():
         print(f"Pasta não encontrada: {DIR_RAW_CENSO}")
-        print("Baixe os arquivos do checklist (docs/01_mapeamento_extracao.md) antes de rodar este script — veja download_censo2022.sh.")
+        print("Rode antes: bash download_censo2022.sh")
         sys.exit(1)
 
     zips = sorted(DIR_RAW_CENSO.glob("*.zip"))
     if not zips:
         print(f"Nenhum .zip encontrado em {DIR_RAW_CENSO}.")
-        print("Baixe os arquivos do checklist antes de rodar este script.")
+        print("Rode antes: bash download_censo2022.sh")
         sys.exit(1)
 
     print(f"Encontrados {len(zips)} arquivo(s) .zip em {DIR_RAW_CENSO}")

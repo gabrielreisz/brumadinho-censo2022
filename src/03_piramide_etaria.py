@@ -1,17 +1,9 @@
-# -*- coding: utf-8 -*-
 """
-03_piramide_etaria.py
-======================
-Transforma o arquivo largo censo2022_demografia_distritos.csv (uma linha por
-distrito, uma coluna por combinação sexo/faixa etária — ex.: V01009 = "Sexo
-masculino, 0 a 4 anos") num formato longo (tidy): uma linha por
-distrito/sexo/faixa etária. É esse formato que o Power BI usa bem para a
-pirâmide etária (eixo de categoria "faixa etária", séries "Masculino"/
-"Feminino" com valores espelhados).
+Transforma censo2022_demografia_distritos.csv (formato largo, uma coluna por
+combinação sexo/faixa etária) em formato longo: uma linha por distrito, sexo e
+faixa etária — que é o formato que o Power BI usa bem na pirâmide etária.
 
-Depende de já ter rodado, nessa ordem:
-    python src/01_processar_censo.py
-    python src/02_gerar_dicionario.py
+Depende de ter rodado antes 01_processar_censo.py e 02_gerar_dicionario.py.
 
 Gera:
     data/processed/censo2022_piramide_etaria_distritos.csv
@@ -44,9 +36,10 @@ ORDEM_FAIXAS = [
 
 
 def _parse_descricao(descricao: str) -> tuple[str, str] | None:
-    """'Sexo masculino, 0 a 4 anos' -> ('Masculino', '0 a 4 anos'); '0 a 4
-    anos' -> ('Total', '0 a 4 anos'). Retorna None para descrições que não
-    são faixa etária (totais agregados, não linhas da pirâmide)."""
+    """'Sexo masculino, 0 a 4 anos' -> ('Masculino', '0 a 4 anos').
+
+    Retorna None para descrições que não são faixa etária (totais agregados).
+    """
     descricao = descricao.strip()
 
     m = re.match(r"^Sexo masculino,\s*(.+)$", descricao, re.IGNORECASE)
@@ -75,8 +68,7 @@ def construir() -> pd.DataFrame:
     demografia = pd.read_csv(caminho_demografia)
     dicionario = pd.read_csv(caminho_dicionario)
 
-    # Mapa variavel_num -> descrição, só do tema Demografia (evita colisão
-    # de números entre temas diferentes)
+    # Só o tema Demografia: o mesmo número de variável se repete entre temas
     dic_demografia = dicionario[dicionario["tema"] == "Demografia"].set_index("variavel_num")["descricao"]
 
     colunas_id = ["CD_DIST", "NM_DIST", "distrito_alvo"]
@@ -88,8 +80,7 @@ def construir() -> pd.DataFrame:
             m = re.match(r"^[Vv](\d+)$", col)
             if not m:
                 continue
-            num = int(m.group(1))
-            descricao = dic_demografia.get(num)
+            descricao = dic_demografia.get(int(m.group(1)))
             if descricao is None:
                 continue
             parsed = _parse_descricao(descricao)
@@ -109,8 +100,7 @@ def construir() -> pd.DataFrame:
 
     df = pd.DataFrame(linhas)
 
-    # Ordem "natural" das faixas etárias, não alfabética — ajuda o eixo do
-    # gráfico a sair certo sem precisar configurar "ordenar por coluna"
+    # Ordem natural das faixas, não alfabética
     df["faixa_etaria"] = pd.Categorical(df["faixa_etaria"], categories=ORDEM_FAIXAS, ordered=True)
     df = df.sort_values(["distrito_alvo", "sexo", "faixa_etaria"]).reset_index(drop=True)
 
@@ -118,8 +108,6 @@ def construir() -> pd.DataFrame:
     df.to_csv(destino, index=False, encoding="utf-8")
     print(f"{len(df)} linhas (formato longo) -> {destino}")
 
-    # Checagem simples de consistência: Masculino + Feminino deve bater com
-    # o Total por faixa etária
     pivot = df.pivot_table(
         index=["distrito_alvo", "faixa_etaria"],
         columns="sexo",
@@ -130,7 +118,7 @@ def construir() -> pd.DataFrame:
     if {"Masculino", "Feminino", "Total"}.issubset(pivot.columns):
         diverge = (pivot["Masculino"] + pivot["Feminino"] - pivot["Total"]).abs()
         if (diverge > 0).any():
-            print("[aviso] Encontrei diferenças entre Masculino+Feminino e Total em algumas faixas — confira manualmente:")
+            print("[aviso] Masculino+Feminino difere do Total em algumas faixas:")
             print(pivot[diverge > 0])
         else:
             print("Checagem OK: Masculino + Feminino = Total em todas as faixas.")

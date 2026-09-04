@@ -44,7 +44,7 @@ docs/01_mapeamento_extracao.md   documentação da etapa de mapeamento: onde
                                   não existe no Censo nesse nível (renda,
                                   saúde) e por quê
 download_censo2022.sh            baixa os arquivos brutos do IBGE
-requirements.txt                 dependências Python (pandas, pyarrow, openpyxl)
+requirements.txt                 dependências Python (pandas, pyarrow, openpyxl, matplotlib)
 src/config.py                    caminhos e constantes compartilhadas
 src/01_processar_censo.py        filtra os ZIPs brutos para os 2 distritos
 src/02_gerar_dicionario.py       consolida o dicionário de variáveis do IBGE

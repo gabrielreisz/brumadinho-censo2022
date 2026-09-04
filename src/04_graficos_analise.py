@@ -1,16 +1,10 @@
-# -*- coding: utf-8 -*-
 """
-04_graficos_analise.py
-========================
-Gera os gráficos (matplotlib) de análise social, demográfica e de
-saneamento/acesso à saúde dos dois distritos-alvo, a partir dos CSVs já
-filtrados em data/processed/.
+Gera os gráficos em reports/figuras/ a partir dos CSVs já tratados em
+data/processed/.
 
-Não há gráfico de renda nem de saúde propriamente dita (mortalidade,
-cobertura de atenção básica): o Censo 2022 não abre renda abaixo do nível
-municipal, e não há fonte de saúde no nível distrital (ver
-docs/01_mapeamento_extracao.md). Os gráficos de saneamento servem de proxy
-disso, o que cada um deixa explícito no rodapé.
+Não há gráfico de renda nem de saúde por distrito: o Censo 2022 não abre esses
+dados abaixo do nível municipal (ver docs/01_mapeamento_extracao.md). Os
+gráficos de saneamento servem de proxy, o que cada um explicita no rodapé.
 
 Uso:
     python src/04_graficos_analise.py
@@ -31,9 +25,6 @@ from config import DIR_PROCESSED, RAIZ
 
 DIR_FIGURAS = RAIZ / "reports" / "figuras"
 
-# --------------------------------------------------------------------------
-# Paleta (padrão interno de dataviz — ordem categórica fixa, nunca por rank)
-# --------------------------------------------------------------------------
 COR_TEXTO_PRIMARIO = "#0b0b0b"
 COR_TEXTO_SECUNDARIO = "#52514e"
 COR_TEXTO_MUTED = "#898781"
@@ -41,25 +32,24 @@ COR_GRADE = "#e1e0d9"
 COR_SUPERFICIE = "#fcfcfb"
 
 CATEGORICA = {
-    1: "#2a78d6",  # azul
-    2: "#eb6834",  # laranja
-    3: "#1baf7a",  # água-marinha
-    4: "#eda100",  # amarelo
-    5: "#e87ba4",  # magenta
-    6: "#008300",  # verde
-    7: "#4a3aa7",  # violeta
-    8: "#e34948",  # vermelho
+    1: "#2a78d6",
+    2: "#eb6834",
+    3: "#1baf7a",
+    4: "#eda100",
+    5: "#e87ba4",
+    6: "#008300",
+    7: "#4a3aa7",
+    8: "#e34948",
 }
 
-# Mapeamento FIXO distrito -> cor, usado em todo gráfico que compara os dois
-# (a identidade de cor nunca muda, mesmo que a ordem das barras mude)
+# Cor fixa por distrito, para a identidade não mudar entre gráficos
 COR_DISTRITO = {
     "Conceição de Itaguá": CATEGORICA[1],
     "São José do Paraopeba": CATEGORICA[2],
 }
 COR_MASCULINO = CATEGORICA[1]
 COR_FEMININO = CATEGORICA[2]
-COR_NEUTRA = "#c3c2b7"  # cinza, para "não" / "sem" / categorias residuais
+COR_NEUTRA = "#c3c2b7"
 
 FONTE_CENSO = "Fonte: Censo Demográfico 2022 / IBGE — Agregados por Distrito (ftp.ibge.gov.br)"
 
@@ -80,7 +70,6 @@ plt.rcParams.update(
 
 
 def _rodape(fig, texto: str = FONTE_CENSO, nota: str | None = None) -> None:
-    """Adiciona a citação de fonte (obrigatória em todo gráfico) no rodapé."""
     linha = texto if nota is None else f"{texto}\n{nota}"
     fig.text(
         0.01,
@@ -94,10 +83,8 @@ def _rodape(fig, texto: str = FONTE_CENSO, nota: str | None = None) -> None:
 
 
 def _titulo(fig, titulo: str, subtitulo: str | None = None) -> float:
-    """Título/subtítulo com deslocamento fixo em polegadas a partir do topo
-    (em vez de fração), pra não sobrepor em figuras baixas nem ficar solto
-    em figuras altas. Retorna a fração de altura livre abaixo do título, pra
-    usar como `top` do layout do gráfico."""
+    """Título/subtítulo posicionados em polegadas a partir do topo, não em
+    fração da figura. Retorna a fração de altura livre, para usar como `top`."""
     fig_h = fig.get_size_inches()[1]
     y_titulo = 1 - (0.05 / fig_h)
     fig.suptitle(
@@ -126,19 +113,14 @@ def _carregar(nome_tema: str) -> pd.DataFrame:
 
 
 def _valor(df: pd.DataFrame, distrito: str, coluna: str) -> float:
-    """Lê um valor e converte pro formato numérico, tratando o caso em que o
-    IBGE grava decimais com vírgula (ex.: AREA_KM2 = '118,8365656') — o
-    pandas lê essas colunas como texto porque não reconhece vírgula como
-    separador decimal por padrão."""
+    """Lê um valor como número. O IBGE grava alguns decimais com vírgula
+    (AREA_KM2 = '118,8365656'), que o pandas carrega como texto."""
     bruto = df.loc[distrito, coluna]
     if isinstance(bruto, str):
         bruto = bruto.replace(".", "").replace(",", ".")
     return float(bruto)
 
 
-# --------------------------------------------------------------------------
-# 1. Cartões-resumo: população, domicílios, área, densidade
-# --------------------------------------------------------------------------
 def grafico_resumo() -> None:
     basico = _carregar("basico")
     distritos = list(basico.index)
@@ -171,7 +153,6 @@ def grafico_resumo() -> None:
             )
         eixo.margins(y=0.18)
 
-    # Densidade calculada (não vem pronta no arquivo básico de forma limpa)
     eixo = eixos[3]
     densidades = [
         _valor(basico, d, "v0001") / _valor(basico, d, "AREA_KM2") for d in distritos
@@ -204,9 +185,6 @@ def grafico_resumo() -> None:
     _salvar(fig, "01_populacao_domicilios_area.png")
 
 
-# --------------------------------------------------------------------------
-# 2. Pirâmide etária (mirrored, Homens x Mulheres) — uma por distrito
-# --------------------------------------------------------------------------
 def grafico_piramide() -> None:
     piramide = pd.read_csv(DIR_PROCESSED / "censo2022_piramide_etaria_distritos.csv")
     ordem_faixas = [
@@ -259,9 +237,6 @@ def grafico_piramide() -> None:
     _salvar(fig, "02_piramide_etaria.png")
 
 
-# --------------------------------------------------------------------------
-# 3. Cor ou raça
-# --------------------------------------------------------------------------
 def grafico_cor_raca() -> None:
     df = _carregar("cor_ou_raca")
     colunas = {
@@ -295,9 +270,6 @@ def grafico_cor_raca() -> None:
     _salvar(fig, "03_cor_ou_raca.png")
 
 
-# --------------------------------------------------------------------------
-# 4. Alfabetização (15 anos ou mais) — donut por distrito
-# --------------------------------------------------------------------------
 def grafico_alfabetizacao() -> None:
     df = _carregar("alfabetizacao")
 
@@ -330,11 +302,9 @@ def grafico_alfabetizacao() -> None:
 
 
 def grafico_alfabetizacao_por_idade() -> None:
-    """Bônus: taxa de alfabetização por faixa etária — mostra se a
-    iliteracia está concentrada nos mais velhos (padrão típico no Brasil
-    rural) ou distribuída."""
+    """Taxa de alfabetização por faixa etária: mostra em quais gerações a
+    iliteracia está concentrada."""
     df = _carregar("alfabetizacao")
-    # Mapa direto: total por faixa (V00644-656) e alfabetizados por faixa (V00748-760)
     faixas_totais = {
         "V00644": "15-19", "V00645": "20-24", "V00646": "25-29", "V00647": "30-34",
         "V00648": "35-39", "V00649": "40-44", "V00650": "45-49", "V00651": "50-54",
@@ -382,11 +352,6 @@ def grafico_alfabetizacao_por_idade() -> None:
     _salvar(fig, "04b_alfabetizacao_por_idade.png")
 
 
-# --------------------------------------------------------------------------
-# 5-7. Saneamento: água, esgoto, lixo (proxy de acesso à saúde/condições
-# sanitárias — não são indicadores de saúde propriamente ditos, ver aviso
-# no topo do arquivo)
-# --------------------------------------------------------------------------
 def _grafico_barra_empilhada_100(
     df: pd.DataFrame,
     colunas: dict[str, str],
@@ -395,19 +360,16 @@ def _grafico_barra_empilhada_100(
     nome_arquivo: str,
     nota_fonte: str,
 ) -> None:
-    """Barra 100% empilhada horizontal, uma linha por distrito. Altura da
-    figura e posição da legenda calculadas em polegadas a partir do número
-    de linhas da legenda, com a legenda anexada à figura (não aos eixos) e
-    `subplots_adjust` em vez de `tight_layout` — evita que a legenda invada
-    o rodapé quando o número de categorias varia entre os gráficos que usam
-    esta função."""
+    """Barra 100% empilhada horizontal, uma linha por distrito. Altura e
+    posição da legenda são calculadas em polegadas a partir do número de
+    categorias, para a legenda não invadir o rodapé quando esse número muda."""
     distritos = list(COR_DISTRITO.keys())
     n_col_legenda = 3
-    n_linhas_legenda = -(-len(colunas) // n_col_legenda)  # ceil
+    n_linhas_legenda = -(-len(colunas) // n_col_legenda)
 
-    altura_rodape = 0.40  # nota de fonte, até 2 linhas
+    altura_rodape = 0.40
     altura_legenda = 0.24 * n_linhas_legenda + 0.10
-    altura_eixo_x = 0.45  # ticks do eixo x + rótulo do eixo x
+    altura_eixo_x = 0.45
     folga = 0.12
     altura_inferior = altura_rodape + altura_legenda + altura_eixo_x + folga
     altura_barras = 0.85 * len(distritos) + 0.5
@@ -540,9 +502,6 @@ def grafico_banheiro() -> None:
     _salvar(fig, "08_banheiro_exclusivo.png")
 
 
-# --------------------------------------------------------------------------
-# 9. Composição domiciliar (vulnerabilidade social)
-# --------------------------------------------------------------------------
 def grafico_composicao_domiciliar() -> None:
     df = _carregar("parentesco")
     colunas = {
@@ -576,19 +535,13 @@ def grafico_composicao_domiciliar() -> None:
     _salvar(fig, "09_composicao_domiciliar.png")
 
 
-# --------------------------------------------------------------------------
-# 10. Contexto municipal (Brumadinho como um todo) — economia e saúde
-# NÃO são dados distritais. Ver aviso no rodapé do próprio gráfico.
-# --------------------------------------------------------------------------
 def grafico_contexto_municipal() -> None:
-    # Valores capturados manualmente do painel IBGE Cidades em 04/09/2026
-    # (não há API tabular simples pra esse painel-resumo). Pra atualizar,
-    # revisite a página e ajuste os valores abaixo.
-    #
-    # Formato de cartões, não de barra: PIB per capita (R$ dezenas de
-    # milhar), percentuais (0-100) e IDHM (0-1) são unidades incompatíveis
-    # demais pra dividir um eixo — a barra do PIB dominaria a escala e
-    # esconderia as outras.
+    """Indicadores do município inteiro, não dos distritos. Valores copiados
+    à mão do painel IBGE Cidades (não há API tabular para esse painel); para
+    atualizar, revisite a página e ajuste a lista abaixo.
+
+    Formato de cartão em vez de barra porque PIB per capita, percentuais e
+    IDHM têm unidades incompatíveis para dividir um eixo."""
     indicadores = [
         ("PIB per capita", "R$ 73.117", "IBGE/Atlas Brasil, 2023"),
         ("Pop. com renda per capita\naté 1/2 sal. mínimo", "33,5%", "IBGE, Censo 2010"),
@@ -598,7 +551,7 @@ def grafico_contexto_municipal() -> None:
     ]
 
     fig, eixos = plt.subplots(1, len(indicadores), figsize=(13, 3.4))
-    cor_destaque = CATEGORICA[7]  # violeta — sinaliza "nível diferente" (município, não distrito)
+    cor_destaque = CATEGORICA[7]
 
     for eixo, (rotulo, valor, fonte_indiv) in zip(eixos, indicadores):
         eixo.axis("off")
@@ -623,7 +576,6 @@ def grafico_contexto_municipal() -> None:
     _salvar(fig, "10_contexto_municipal.png")
 
 
-# --------------------------------------------------------------------------
 if __name__ == "__main__":
     print("Gerando gráficos em reports/figuras/ ...")
     grafico_resumo()
