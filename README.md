@@ -7,7 +7,8 @@ nenhum painel oficial (SIDRA e IBGE Cidades param no nível de município).
 **Painel interativo:** https://gabrielreisz.github.io/brumadinho-censo2022/
 
 O painel tem uma aba por distrito, com os gráficos daquele distrito sozinho, mais uma
-aba de comparação e uma de contexto municipal. A barra de filtros no topo liga e desliga
+aba de comparação, uma sobre o rompimento da barragem e uma de contexto municipal. A
+barra de filtros no topo liga e desliga
 temas (demografia, educação, saúde, saneamento, renda, série histórica...) — tudo aparece
 por padrão, e a escolha fica salva no navegador.
 
@@ -35,9 +36,17 @@ por padrão, e a escolha fica salva no navegador.
 - Em 2010 — dado de renda mais recente que existe por distrito — **41,5% dos domicílios
   de São José do Paraopeba viviam com até 1/2 salário mínimo per capita**, contra 20,5%
   em Conceição de Itaguá.
-- No município, **22,6% dos empregos formais estão na indústria extrativa**, e o salário
-  médio de um homem branco ou amarelo (R$ 5.036) é 63% maior que o de uma mulher preta,
-  parda ou indígena (R$ 3.084).
+- No município, **22,3% dos 12.390 vínculos formais estão na indústria extrativa**, e o
+  salário médio de um homem branco ou amarelo (R$ 5.036) é 63% maior que o de uma mulher
+  preta, parda ou indígena (R$ 3.084).
+- O **emprego formal de Brumadinho não caiu depois do rompimento**: eram 9.444 vínculos
+  em 2018, 10.721 em 2019 e 14.070 em 2022, com pico da mineração em 2024 (2.767). A RAIS
+  registra o vínculo, não o motivo — não dá para separar obra de reparação de mineração
+  em outras minas.
+- **As quatro barragens de mineração hoje sob declaração de emergência em Brumadinho
+  estão todas em Conceição de Itaguá** — três em nível 1 e uma em nível 2, todas da Mina
+  do Queias, todas com dano potencial alto e com pessoas morando na área a jusante,
+  segundo o próprio cadastro da ANM.
 
 ## Fontes e como cada uma foi tratada
 
@@ -106,13 +115,28 @@ sai até município.
 As categorias mudaram entre os censos: só água da rede geral, esgoto em rede geral e
 lixo coletado têm definição equivalente, e é só isso que o painel compara.
 
+### ANM — Cadastro Nacional de Barragens de Mineração (nível distrito, por cruzamento)
+
+Mesmo cruzamento geográfico do CNES: o cadastro dá município, e o
+`14_barragens_anm.py` converte as coordenadas de grau-minuto-segundo para decimal e
+testa contra os polígonos do IBGE. São 19 barragens em Brumadinho. A B1 que rompeu em
+2019 não está no cadastro — o que aparece da mesma mina são as quatro estruturas
+remanescentes, todas em descaracterização.
+
 ### DataViva / Cedeplar-UFMG — RAIS (nível município)
 
-Emprego por setor, salário por escolaridade e salário por sexo e cor/raça. Os arquivos
+Emprego por setor, salário por escolaridade, salário por sexo e cor/raça, e uma série de
+emprego por setor em 2018, 2019, 2020, 2022 e 2024. Os arquivos
 do DataViva cobrem o Brasil inteiro e chegam a 2 GB, então o `07_dataviva_brumadinho.py`
 lê em streaming, filtra linha a linha e para assim que passa do código de Brumadinho —
 de ~310 MB lidos sobram 1.170 linhas. **RAIS não desce abaixo de município**, então
 esses números aparecem numa aba separada no site, como contexto.
+
+Atenção a uma armadilha do arquivo: as categorias de `Sexo e Raça/Cor` se sobrepõem —
+`BrAm - Total` e `PPI - Total` cortam o mesmo universo por cor/raça, `Homem - Total` e
+`Mulher - Total` cortam por sexo. Somar as duas famílias conta cada vínculo duas vezes.
+O total usa o corte por sexo, que é o único que cobre também os vínculos sem cor/raça
+declarada.
 
 ## Estrutura do repositório
 
@@ -134,6 +158,7 @@ src/10_setores_censitarios.py    malha + agregados por setor -> GeoJSON do mapa 
 src/11_censo2010_serie.py        Censo 2010 -> série histórica e renda por distrito
 src/12_cnes_equipes.py           base completa do CNES -> equipes e profissionais
 src/13_graficos_por_distrito.py  PNGs de um distrito por vez
+src/14_barragens_anm.py          cadastro de barragens da ANM -> barragens por distrito
 src/estilo_graficos.py           paleta e layout compartilhados pelos gráficos
 docs/01_mapeamento_extracao.md   o que existe e o que não existe por distrito (1ª rodada)
 docs/02_novas_fontes.md          SUS, DataViva, malha: o que entrou e por quê
@@ -163,7 +188,16 @@ python src/10_setores_censitarios.py    # setores censitários
 python src/11_censo2010_serie.py        # série histórica e renda de 2010
 python src/12_cnes_equipes.py           # equipes e profissionais de saúde
 python src/08_dados_site.py             # JSON do site
+python src/14_barragens_anm.py          # barragens de mineração por distrito
 python src/13_graficos_por_distrito.py  # PNGs de cada distrito
+```
+
+O cadastro da ANM também precisa de download à parte — o servidor recusa requisição sem
+User-Agent de navegador:
+
+```bash
+curl -L -H "User-Agent: Mozilla/5.0" -o data/raw/anm/Barragens.csv \
+  "https://dadosabertos.anm.gov.br/SIGBM/Barragens.csv"
 ```
 
 O `12_cnes_equipes.py` precisa da base completa do CNES, que não tem link estável:

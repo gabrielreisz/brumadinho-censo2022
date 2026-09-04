@@ -214,3 +214,79 @@ crescimento.
 Sem mudança em relação à Etapa 2: mortalidade por causa (SIM registra município de
 residência), internações, cobertura de atenção básica oficial e CadÚnico/IVCAD continuam
 sem abertura por distrito.
+
+---
+
+# Etapa 4 — A relação com o rompimento da barragem
+
+Em 25 de janeiro de 2019 a barragem B1 da Mina Córrego do Feijão, da Vale, rompeu em
+Brumadinho. Esta etapa reúne o que as fontes do projeto conseguem dizer sobre a relação
+entre esse evento e os dois distritos — e delimita o que elas não dizem.
+
+## O que estes dados não permitem afirmar
+
+Nenhuma fonte usada aqui traz **causa de morte**, **lista de vítimas por distrito** ou a
+**mancha de rejeito**. O Censo pergunta se alguém que morava no domicílio faleceu e em
+que semestre, não por quê. O cadastro da ANM descreve as barragens hoje, não o que houve
+em 2019. A RAIS registra vínculos formais, não o motivo de existirem ou terminarem.
+
+Correlação de datas não é prova de causa, e a aba do site abre com esse aviso.
+
+## 9. ANM — Cadastro Nacional de Barragens de Mineração
+
+```
+https://dadosabertos.anm.gov.br/SIGBM/Barragens.csv
+```
+
+O servidor recusa requisição sem `User-Agent` de navegador (403). O cadastro dá
+município, não distrito, então vale o mesmo cruzamento geográfico do CNES — com o passo
+extra de converter as coordenadas de grau-minuto-segundo para decimal.
+
+São **19 barragens em Brumadinho**. A B1 que rompeu não está no cadastro; da mesma mina
+restam quatro estruturas (Menezes I, Menezes II, VI e VII), todas em descaracterização,
+no distrito-sede.
+
+**O achado:** as **quatro barragens hoje sob declaração de emergência estão todas em
+Conceição de Itaguá** — três em nível 1 e uma em nível 2, todas da Mina do Queias
+(EMICON), todas com categoria de risco e dano potencial altos e todas com o campo de
+população a jusante marcado como "existem pessoas ocupando permanentemente a área
+afetada". Há ainda, no mesmo distrito, uma barragem de 55 m com **alteamento a montante**
+— o método da B1 — em descaracterização.
+
+## O que dá para medir
+
+| Medida | Resultado | Fonte |
+|---|---|---|
+| Distância da mina à borda do distrito | sede 1,7 km · Piedade 4,7 · Aranha 6,2 · **Conceição de Itaguá 8,0** · **São José do Paraopeba 11,4** | coordenadas ANM + malha IBGE |
+| Domicílios que tiram água de rio, córrego ou lago | **zero** nos dois distritos | Censo 2022, V00117 |
+| Domicílios fora da rede geral | Conceição 9,4% · São José **39,4%** (quase todo poço profundo) | Censo 2022, V00111–V00118 |
+| Óbitos declarados no 1º semestre de 2019 | Conceição 34 (maior semestre da série) · São José 0 | Censo 2022, V01264 |
+| Equipes de saúde mental ativas | **3, todas cadastradas em 2019** | CNES, `DT_ATIVACAO` |
+| Emprego formal do município | 9.444 (2018) → 10.721 (2019) → 9.933 (2020) → 14.070 (2022) → 12.390 (2024) | RAIS via DataViva |
+
+A distância é geométrica: não representa o caminho do rejeito, que desceu o córrego do
+Ferro-Carvão até o rio Paraopeba. Não há, nas fontes deste projeto, uma camada de
+hidrografia que permita dizer que trechos de rio cruzam cada distrito.
+
+O dado de água limita a exposição a água **de superfície**, não a subterrânea: o Censo
+não diz se os poços de São José do Paraopeba foram testados.
+
+A série de equipes conta só as que estão ativas hoje — equipes desativadas desde 2019 não
+aparecem, então ela mostra o que restou, não tudo o que foi criado.
+
+## Um erro que estava publicado
+
+Ao montar a série de emprego apareceu um problema no arquivo do DataViva que já tinha
+contaminado a aba municipal: as categorias de `Sexo e Raça/Cor` **se sobrepõem**.
+`BrAm - Total` e `PPI - Total` cortam o universo por cor/raça; `Homem - Total` e
+`Mulher - Total` cortam por sexo. Somar as duas famílias conta cada vínculo duas vezes —
+era o que o `08_dados_site.py` fazia, e o site publicou "16.757 vínculos formais" quando
+o número correto é **12.390**.
+
+O total agora usa o corte por sexo, que é o único que cobre também os vínculos sem
+cor/raça declarada (as duas famílias não fecham no mesmo número: 12.390 contra 11.901).
+
+A correção também inverteu uma leitura: com os números errados o emprego parecia
+despencar depois de 2019. Com os certos, **ele sobe** — 9.444 em 2018 para 10.721 em
+2019, com pico de 14.070 em 2022. A RAIS não diz o porquê, e obra de reparação,
+mineração em outras minas e o resto da economia não são separáveis nesse arquivo.
