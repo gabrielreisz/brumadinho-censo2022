@@ -1,0 +1,12 @@
+# Dados brutos baixados do IBGE (grandes, redownload via download_censo2022.sh)
+data/raw/
+
+# Parquet derivado — redundante com os CSVs equivalentes, regenerável
+data/processed/*.parquet
+
+# Python
+__pycache__/
+*.pyc
+
+# Sistema
+.DS_Store

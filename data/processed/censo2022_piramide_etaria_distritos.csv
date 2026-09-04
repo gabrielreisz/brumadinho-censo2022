@@ -1,0 +1,67 @@
+CD_DIST,NM_DIST,distrito_alvo,sexo,faixa_etaria,populacao
+310900615,Conceição de Itaguá,Conceição de Itaguá,Feminino,0 a 4 anos,208
+310900615,Conceição de Itaguá,Conceição de Itaguá,Feminino,5 a 9 anos,251
+310900615,Conceição de Itaguá,Conceição de Itaguá,Feminino,10 a 14 anos,221
+310900615,Conceição de Itaguá,Conceição de Itaguá,Feminino,15 a 19 anos,240
+310900615,Conceição de Itaguá,Conceição de Itaguá,Feminino,20 a 24 anos,280
+310900615,Conceição de Itaguá,Conceição de Itaguá,Feminino,25 a 29 anos,267
+310900615,Conceição de Itaguá,Conceição de Itaguá,Feminino,30 a 39 anos,550
+310900615,Conceição de Itaguá,Conceição de Itaguá,Feminino,40 a 49 anos,533
+310900615,Conceição de Itaguá,Conceição de Itaguá,Feminino,50 a 59 anos,476
+310900615,Conceição de Itaguá,Conceição de Itaguá,Feminino,60 a 69 anos,325
+310900615,Conceição de Itaguá,Conceição de Itaguá,Feminino,70 anos ou mais,203
+310900615,Conceição de Itaguá,Conceição de Itaguá,Masculino,0 a 4 anos,211
+310900615,Conceição de Itaguá,Conceição de Itaguá,Masculino,5 a 9 anos,228
+310900615,Conceição de Itaguá,Conceição de Itaguá,Masculino,10 a 14 anos,242
+310900615,Conceição de Itaguá,Conceição de Itaguá,Masculino,15 a 19 anos,253
+310900615,Conceição de Itaguá,Conceição de Itaguá,Masculino,20 a 24 anos,308
+310900615,Conceição de Itaguá,Conceição de Itaguá,Masculino,25 a 29 anos,284
+310900615,Conceição de Itaguá,Conceição de Itaguá,Masculino,30 a 39 anos,522
+310900615,Conceição de Itaguá,Conceição de Itaguá,Masculino,40 a 49 anos,568
+310900615,Conceição de Itaguá,Conceição de Itaguá,Masculino,50 a 59 anos,391
+310900615,Conceição de Itaguá,Conceição de Itaguá,Masculino,60 a 69 anos,287
+310900615,Conceição de Itaguá,Conceição de Itaguá,Masculino,70 anos ou mais,193
+310900615,Conceição de Itaguá,Conceição de Itaguá,Total,0 a 4 anos,420
+310900615,Conceição de Itaguá,Conceição de Itaguá,Total,5 a 9 anos,481
+310900615,Conceição de Itaguá,Conceição de Itaguá,Total,10 a 14 anos,463
+310900615,Conceição de Itaguá,Conceição de Itaguá,Total,15 a 19 anos,499
+310900615,Conceição de Itaguá,Conceição de Itaguá,Total,20 a 24 anos,588
+310900615,Conceição de Itaguá,Conceição de Itaguá,Total,25 a 29 anos,551
+310900615,Conceição de Itaguá,Conceição de Itaguá,Total,30 a 39 anos,1076
+310900615,Conceição de Itaguá,Conceição de Itaguá,Total,40 a 49 anos,1105
+310900615,Conceição de Itaguá,Conceição de Itaguá,Total,50 a 59 anos,869
+310900615,Conceição de Itaguá,Conceição de Itaguá,Total,60 a 69 anos,616
+310900615,Conceição de Itaguá,Conceição de Itaguá,Total,70 anos ou mais,405
+310900625,São José do Paraopeba,São José do Paraopeba,Feminino,0 a 4 anos,35
+310900625,São José do Paraopeba,São José do Paraopeba,Feminino,5 a 9 anos,37
+310900625,São José do Paraopeba,São José do Paraopeba,Feminino,10 a 14 anos,42
+310900625,São José do Paraopeba,São José do Paraopeba,Feminino,15 a 19 anos,22
+310900625,São José do Paraopeba,São José do Paraopeba,Feminino,20 a 24 anos,37
+310900625,São José do Paraopeba,São José do Paraopeba,Feminino,25 a 29 anos,41
+310900625,São José do Paraopeba,São José do Paraopeba,Feminino,30 a 39 anos,83
+310900625,São José do Paraopeba,São José do Paraopeba,Feminino,40 a 49 anos,79
+310900625,São José do Paraopeba,São José do Paraopeba,Feminino,50 a 59 anos,104
+310900625,São José do Paraopeba,São José do Paraopeba,Feminino,60 a 69 anos,77
+310900625,São José do Paraopeba,São José do Paraopeba,Feminino,70 anos ou mais,78
+310900625,São José do Paraopeba,São José do Paraopeba,Masculino,0 a 4 anos,27
+310900625,São José do Paraopeba,São José do Paraopeba,Masculino,5 a 9 anos,39
+310900625,São José do Paraopeba,São José do Paraopeba,Masculino,10 a 14 anos,26
+310900625,São José do Paraopeba,São José do Paraopeba,Masculino,15 a 19 anos,39
+310900625,São José do Paraopeba,São José do Paraopeba,Masculino,20 a 24 anos,51
+310900625,São José do Paraopeba,São José do Paraopeba,Masculino,25 a 29 anos,58
+310900625,São José do Paraopeba,São José do Paraopeba,Masculino,30 a 39 anos,110
+310900625,São José do Paraopeba,São José do Paraopeba,Masculino,40 a 49 anos,88
+310900625,São José do Paraopeba,São José do Paraopeba,Masculino,50 a 59 anos,121
+310900625,São José do Paraopeba,São José do Paraopeba,Masculino,60 a 69 anos,97
+310900625,São José do Paraopeba,São José do Paraopeba,Masculino,70 anos ou mais,52
+310900625,São José do Paraopeba,São José do Paraopeba,Total,0 a 4 anos,72
+310900625,São José do Paraopeba,São José do Paraopeba,Total,5 a 9 anos,78
+310900625,São José do Paraopeba,São José do Paraopeba,Total,10 a 14 anos,76
+310900625,São José do Paraopeba,São José do Paraopeba,Total,15 a 19 anos,68
+310900625,São José do Paraopeba,São José do Paraopeba,Total,20 a 24 anos,91
+310900625,São José do Paraopeba,São José do Paraopeba,Total,25 a 29 anos,103
+310900625,São José do Paraopeba,São José do Paraopeba,Total,30 a 39 anos,193
+310900625,São José do Paraopeba,São José do Paraopeba,Total,40 a 49 anos,167
+310900625,São José do Paraopeba,São José do Paraopeba,Total,50 a 59 anos,225
+310900625,São José do Paraopeba,São José do Paraopeba,Total,60 a 69 anos,174
+310900625,São José do Paraopeba,São José do Paraopeba,Total,70 anos ou mais,131
