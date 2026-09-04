@@ -3,9 +3,7 @@
 Pipeline de dados que recorta os indicadores do Censo 2022 (IBGE) para dois
 distritos específicos de Brumadinho-MG — **São José do Paraopeba** e
 **Conceição de Itaguá** — que não aparecem isolados em nenhum painel oficial
-(SIDRA e o IBGE Cidades só abrem até o nível de município). A ideia é ter
-dados tratados nesse nível de detalhe para análise e, depois, um dashboard
-no Power BI.
+(SIDRA e o IBGE Cidades só abrem até o nível de município). 
 
 ## Como os dados foram tratados
 
