@@ -1,0 +1,21 @@
+Código IBGE,Nível Regional,Ano,Indicador,Tipo de Abertura,Abertura,Sexo e Raça/Cor,Valor
+310900,Município,2024,Coeficiente de Variação do Salário Real,Escolaridade,Fundamental Completo,fund_completo,56.34
+310900,Município,2024,Coeficiente de Variação do Salário Real,Escolaridade,Fundamental Incompleto,fund_incompleto,49.74
+310900,Município,2024,Coeficiente de Variação do Salário Real,Escolaridade,Médio Completo,medio_completo,63.49
+310900,Município,2024,Coeficiente de Variação do Salário Real,Escolaridade,Superior Completo,superior_completo,87.72
+310900,Município,2024,desvio padrao do salario real,Escolaridade,Fundamental Completo,fund_completo,1517.34
+310900,Município,2024,desvio padrao do salario real,Escolaridade,Fundamental Incompleto,fund_incompleto,1403.41
+310900,Município,2024,desvio padrao do salario real,Escolaridade,Médio Completo,medio_completo,2132.82
+310900,Município,2024,desvio padrao do salario real,Escolaridade,Superior Completo,superior_completo,6433.15
+310900,Município,2024,Média do Salário Real,Escolaridade,Fundamental Completo,fund_completo,2693.25
+310900,Município,2024,Média do Salário Real,Escolaridade,Fundamental Incompleto,fund_incompleto,2821.71
+310900,Município,2024,Média do Salário Real,Escolaridade,Médio Completo,medio_completo,3359.08
+310900,Município,2024,Média do Salário Real,Escolaridade,Superior Completo,superior_completo,7333.7
+310900,Município,2024,mediana do salario real,Escolaridade,Fundamental Completo,fund_completo,2300.5
+310900,Município,2024,mediana do salario real,Escolaridade,Fundamental Incompleto,fund_incompleto,2482.71
+310900,Município,2024,mediana do salario real,Escolaridade,Médio Completo,medio_completo,2850.33
+310900,Município,2024,mediana do salario real,Escolaridade,Superior Completo,superior_completo,5809.35
+310900,Município,2024,soma do salario real,Escolaridade,Fundamental Completo,fund_completo,3778624.34
+310900,Município,2024,soma do salario real,Escolaridade,Fundamental Incompleto,fund_incompleto,3115164.34
+310900,Município,2024,soma do salario real,Escolaridade,Médio Completo,medio_completo,21938132.95
+310900,Município,2024,soma do salario real,Escolaridade,Superior Completo,superior_completo,16882171.98
