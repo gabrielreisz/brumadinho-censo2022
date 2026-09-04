@@ -4,7 +4,8 @@ from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
 DIR_RAW_CENSO = RAIZ / "data" / "raw" / "censo2022"
-DIR_RAW_CADUNICO = RAIZ / "data" / "raw" / "cadunico"
+DIR_RAW_MALHA = RAIZ / "data" / "raw" / "malha"
+DIR_RAW_EXTERNO = RAIZ / "data" / "raw" / "externo"
 DIR_PROCESSED = RAIZ / "data" / "processed"
 
 CD_MUNICIPIO_BRUMADINHO = "3109006"
