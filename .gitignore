@@ -4,6 +4,9 @@ data/raw/
 # Ambiente de teste do site
 node_modules/
 
+# Malha de setores extraida do zip
+data/raw/**/MG_*_CD2022/
+
 # Parquet derivado — redundante com os CSVs equivalentes, regenerável
 data/processed/*.parquet
 

@@ -98,3 +98,119 @@ numa aba separada, justamente para não serem lidos como retrato dos distritos.
 - **Censo Escolar / INEP.** Os microdados trazem endereço da escola e permitiriam o
   mesmo cruzamento geográfico feito com o CNES. Não foi feito aqui — fica como próximo
   passo, é o mesmo padrão do `06_cnes_saude.py`.
+
+---
+
+# Etapa 3 — Segunda rodada de fontes
+
+## 5. Censo Escolar / INEP (nível distrito, sem cruzamento)
+
+```
+https://download.inep.gov.br/dados_abertos/microdados_censo_escolar_2025_.zip
+```
+
+Surpresa boa: **os microdados do INEP já trazem `CO_DISTRITO` com o código do IBGE**.
+Não foi preciso o cruzamento geográfico que o CNES exigiu. O ZIP tem 530 MB; o
+`09_censo_escolar.py` lê duas tabelas de dentro dele sem descompactar em disco:
+
+| Tabela | O que traz |
+|---|---|
+| `Tabela_Escola_*.csv` | uma linha por escola: rede, localização, área diferenciada, infraestrutura (`IN_*`), equipe (`QT_PROF_*`) |
+| `Tabela_Matricula_*.csv` | uma linha por escola com matrículas por etapa (`QT_MAT_*`) |
+
+Achados:
+
+- As **duas escolas de São José do Paraopeba são as únicas do município** classificadas
+  em **área remanescente de quilombo** (`TP_LOCALIZACAO_DIFERENCIADA`), o que bate com
+  os 526 quilombolas do Censo.
+- O distrito **não oferece anos finais do fundamental nem ensino médio**: as 113
+  matrículas terminam no 5º ano. Ensino médio só existe na sede (1.205 matrículas).
+- Uma das duas escolas não tem esgoto em rede pública, biblioteca nem quadra.
+
+## 6. Setores censitários (nível abaixo do distrito)
+
+O código do setor censitário (15 dígitos) começa com os 9 do distrito, então o recorte é
+por prefixo — de novo sem cruzamento geográfico. O `10_setores_censitarios.py` junta:
+
+```
+.../Agregados_por_Setores_Censitarios/malha_com_atributos/setores/shp/UF/MG/MG_setores_CD2022.zip
+.../Agregados_por_Setores_Censitarios/Agregados_por_Setor_csv/Agregados_por_setores_*.zip
+```
+
+São **26 setores** nos dois distritos. A soma da população dos setores bate exatamente
+com o total do distrito (7.104 e 1.388), o que serve de conferência do recorte. O
+GeoJSON resultante alimenta o mapa de calor do site, com três indicadores selecionáveis.
+
+## 7. Equipes e profissionais do CNES
+
+A API de dados abertos **não** tem endpoint de equipes nem de profissionais (testado:
+`/cnes/equipes`, `/cnes/profissionais` e variações retornam 404). O caminho é a base
+completa, que não tem link estável no portal:
+
+```
+https://cnes.datasus.gov.br/EstatisticasServlet?path=BASE_DE_DADOS_CNES_202607.ZIP
+```
+
+São 700 MB, servidos com `Transfer-Encoding: chunked` — sem `Content-Length` e sem
+suporte a range, então não dá para ler só um pedaço. O `12_cnes_equipes.py` lê os
+arquivos que interessa de dentro do ZIP em streaming:
+
+| Arquivo | Uso |
+|---|---|
+| `tbEquipe` | equipes ativas, tipo, área de referência e populações assistidas |
+| `rlEstabEquipeProf` | vínculos de profissionais, com CBO |
+| `tbTipoEquipe`, `tbAtividadeProfissional` | rótulos |
+
+`tbDadosProfissionalSus` (962 MB, com nome e CPF) **não é aberto**: a contagem usa o
+identificador anonimizado do vínculo.
+
+**O achado que corrige a leitura anterior:** contar prédios dizia que São José do
+Paraopeba tinha "zero saúde". A base de equipes mostra uma **EAP — Equipe de Atenção
+Primária com área de referência "SAO JOSE"**, sediada na USF Marinhos (outro distrito) e
+marcada como equipe que assiste **população quilombola**. Por isso o script classifica
+uma equipe como atendendo o distrito se está sediada nele *ou* se a referência tem o
+nome dele.
+
+Profissionais por mil habitantes, por distrito da sede: Piedade do Paraopeba 13,4;
+Aranha 11,9; Brumadinho 8,0; Conceição de Itaguá 8,0; São José do Paraopeba 0.
+
+## 8. Censo 2010 — série histórica e a renda que falta
+
+```
+https://ftp.ibge.gov.br/Censos/Censo_Demografico_2010/Resultados_do_Universo/Agregados_por_Setores_Censitarios/MG_20260615.zip
+```
+
+O arquivo `Basico_MG.csv` tem `Cod_distrito`, então o recorte é direto. Duas coisas só
+existem aqui:
+
+**Renda por distrito.** Em 2010 o rendimento estava no questionário do universo e era
+publicado por setor censitário (`DomicilioRenda`, V005–V014, faixas de salário mínimo
+per capita). Em 2022 foi para a amostra, publicada até município. É o dado de renda mais
+recente que existe nesse nível — e mostra 41,5% dos domicílios de São José do Paraopeba
+com até 1/2 SM per capita, contra 20,5% em Conceição de Itaguá.
+
+**Comparação 2010 x 2022.** As categorias mudaram bastante: em 2010 o abastecimento de
+água tinha 4 categorias, em 2022 tem 8. Só três indicadores têm definição equivalente e
+são os únicos comparados:
+
+| | Conceição de Itaguá | São José do Paraopeba |
+|---|---|---|
+| Água da rede geral | 80,5% → 90,6% | 66,2% → 60,6% |
+| Esgoto em rede geral/pluvial | 81,6% → 74,0% | 2,9% → 0,6% |
+| Lixo coletado | 98,1% → 99,7% | 85,8% → 93,2% |
+
+Um erro que quase entrou aqui: na primeira tentativa o lixo aparecia caindo de 85,8%
+para 51,6% em São José. Era comparação errada — a variável de 2010 (`V035`, lixo
+coletado) inclui caçamba de serviço, e do lado de 2022 estava só o serviço de limpeza.
+Com o denominador certo o indicador sobe. **Vale conferir cada par de variáveis antes de
+concluir qualquer coisa sobre a série.**
+
+A base de domicílios cresceu nos dois distritos (1.938 → 2.392 e 408 → 486), então
+percentual que cai não quer dizer rede desfeita: pode ser rede que não acompanhou o
+crescimento.
+
+## O que continua sem existir
+
+Sem mudança em relação à Etapa 2: mortalidade por causa (SIM registra município de
+residência), internações, cobertura de atenção básica oficial e CadÚnico/IVCAD continuam
+sem abertura por distrito.
