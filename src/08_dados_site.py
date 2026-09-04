@@ -15,6 +15,7 @@ Gera:
 from __future__ import annotations
 
 import json
+import math
 import shutil
 import sys
 from pathlib import Path
@@ -324,6 +325,132 @@ def renda_2010(distrito: str) -> list[dict]:
     return [{"rotulo": r, "valor": v, "pct": 100 * v / total} for r, v in valores]
 
 
+def barragens() -> dict:
+    """Cadastro Nacional de Barragens de Mineracao (ANM) cruzado com a malha do
+    IBGE. A B1 da Mina Corrego do Feijao, que rompeu em 2019, nao esta no
+    cadastro: o que aparece sao as estruturas remanescentes da mesma mina."""
+    df = pd.read_csv(DIR_PROCESSED / "anm_barragens_brumadinho.csv")
+    feijao = df[df["mina"].astype(str).str.contains("Feij", na=False)]
+    return {
+        "total": int(len(df)),
+        "em_emergencia": int((df["nivel_emergencia"] != "Sem emergência").sum()),
+        "por_distrito": {
+            distrito: {
+                "total": int(len(sub)),
+                "em_emergencia": int((sub["nivel_emergencia"] != "Sem emergência").sum()),
+                "montante": int((sub["metodo_construtivo"] == "Alteamento a montante").sum()),
+                "lista": [
+                    {"nome": r["nome"], "empreendedor": r["empreendedor"], "mina": r["mina"] if isinstance(r["mina"], str) else "",
+                     "emergencia": r["nivel_emergencia"], "risco": r["risco"], "dano": r["dano_potencial"],
+                     "situacao": r["situacao"], "metodo": r["metodo_construtivo"],
+                     "altura": r["altura_m"] if isinstance(r["altura_m"], str) else None,
+                     "jusante": str(r["populacao_jusante"]).split(" (")[0]}
+                    for _, r in sub.iterrows()
+                ],
+            }
+            for distrito, sub in df.groupby("distrito")
+        },
+        "pontos": [
+            {"nome": r["nome"], "distrito": r["distrito"], "emergencia": r["nivel_emergencia"],
+             "mina": r["mina"] if isinstance(r["mina"], str) else "", "situacao": r["situacao"],
+             "feijao": bool(isinstance(r["mina"], str) and "Feij" in r["mina"]),
+             "lat": r["lat"], "lon": r["lon"]}
+            for _, r in df.dropna(subset=["lat"]).iterrows()
+        ],
+        "mina_feijao": {
+            "lat": float(feijao["lat"].mean()), "lon": float(feijao["lon"].mean()),
+            "estruturas": int(len(feijao)),
+        },
+    }
+
+
+def _distancia_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    raio, rad = 6371.0, math.pi / 180
+    a = (math.sin((lat2 - lat1) * rad / 2) ** 2
+         + math.cos(lat1 * rad) * math.cos(lat2 * rad) * math.sin((lon2 - lon1) * rad / 2) ** 2)
+    return 2 * raio * math.asin(math.sqrt(a))
+
+
+def rompimento() -> dict:
+    """Junta o que os dados deste projeto conseguem dizer sobre o rompimento da
+    barragem da Mina Corrego do Feijao, em 25/01/2019.
+
+    Nenhuma fonte aqui registra causa de morte nem area atingida: o que da pra
+    medir e distancia, exposicao (de onde vem a agua do domicilio), o que existe
+    de barragem hoje e o que mudou no cadastro de saude depois de 2019."""
+    barr = barragens()
+    mina = barr["mina_feijao"]
+    geojson = json.loads((DIR_PROCESSED / "distritos_brumadinho.geojson").read_text(encoding="utf-8"))
+
+    def pontos_da_geometria(geometria):
+        saida = []
+        def caminhar(c):
+            if isinstance(c[0], (int, float)):
+                saida.append(c)
+            else:
+                for i in c:
+                    caminhar(i)
+        caminhar(geometria["coordinates"])
+        return saida
+
+    distancias = []
+    for f in geojson["features"]:
+        pontos = pontos_da_geometria(f["geometry"])
+        distancias.append({
+            "distrito": f["properties"]["nm_dist"],
+            "km": min(_distancia_km(mina["lat"], mina["lon"], p[1], p[0]) for p in pontos),
+            "alvo": bool(f["properties"]["alvo"]),
+        })
+    distancias.sort(key=lambda d: d["km"])
+
+    dom2 = _carregar("caracteristicas_domicilio2")
+    fontes = {"V00111": "Rede geral", "V00112": "Poço profundo/artesiano", "V00113": "Poço raso/cacimba",
+              "V00114": "Fonte/nascente", "V00115": "Carro-pipa", "V00116": "Água da chuva",
+              "V00117": "Rios/açudes/córregos/lagos", "V00118": "Outra forma"}
+    agua = {}
+    for d in DISTRITOS:
+        partes = _series(dom2, d, fontes)
+        fora = sum(p["pct"] for p in partes if p["rotulo"] != "Rede geral")
+        agua[d] = {
+            "partes": partes,
+            "fora_da_rede_pct": fora,
+            "superficial_pct": next(p["pct"] for p in partes if p["rotulo"] == "Rios/açudes/córregos/lagos"),
+        }
+
+    equipes = pd.read_csv(DIR_PROCESSED / "cnes_equipes_brumadinho.csv")
+    equipes["ano"] = pd.to_datetime(equipes["DT_ATIVACAO"], format="%d/%m/%Y", errors="coerce").dt.year
+    por_ano = equipes["ano"].value_counts().sort_index()
+    saude_mental = equipes[equipes["tipo_equipe"].str.contains("SAUDE MENTAL", na=False)]
+
+    caminho_serie = DIR_PROCESSED / "dataviva_emprego_cnae_serie_brumadinho.csv"
+    emprego = []
+    if caminho_serie.exists():
+        serie = pd.read_csv(caminho_serie)
+        total_por_ano = serie.groupby("Ano")["vinculos"].sum()
+        for ano, sub in serie.groupby("Ano"):
+            extrativa = float(sub[sub["secao"] == "B"]["vinculos"].sum())
+            emprego.append({
+                "ano": int(ano),
+                "extrativa": extrativa,
+                "total": float(total_por_ano[ano]),
+                "pct": 100 * extrativa / total_por_ano[ano] if total_por_ano[ano] else 0,
+            })
+
+    return {
+        "data": "25 de janeiro de 2019",
+        "distancias": distancias,
+        "agua": agua,
+        "barragens": barr,
+        "equipes_por_ano": [{"ano": int(a), "valor": int(v)} for a, v in por_ano.items()],
+        "saude_mental": [
+            {"referencia": r["NO_REFERENCIA"], "ano": None if pd.isna(r["ano"]) else int(r["ano"]),
+             "estabelecimento": r["estabelecimento"]}
+            for _, r in saude_mental.iterrows()
+        ],
+        "emprego_extrativa": emprego,
+    }
+
+
 def saude_cnes() -> dict:
     df = pd.read_csv(DIR_PROCESSED / "cnes_estabelecimentos_brumadinho.csv")
     df["sus"] = df["estabelecimento_faz_atendimento_ambulatorial_sus"] == "SIM"
@@ -357,7 +484,9 @@ def saude_cnes() -> dict:
 
 def contexto_municipal() -> dict:
     emprego = pd.read_csv(DIR_PROCESSED / "dataviva_emprego_cnae_brumadinho.csv")
-    emprego = emprego[emprego["Sexo e Raça/Cor"].isin(["BrAm - Total", "Homem - Total", "Mulher - Total"])]
+    # As categorias se sobrepoem (cortes por cor/raca e por sexo do mesmo
+    # universo): somar as duas familias contaria cada vinculo duas vezes.
+    emprego = emprego[emprego["Sexo e Raça/Cor"].isin(["Homem - Total", "Mulher - Total"])]
     por_secao = (
         emprego.groupby("Seção CNAE (1 dígito)")["Valor"].sum().sort_values(ascending=False)
     )
@@ -428,6 +557,7 @@ def gerar() -> dict:
         "saude_pontos": saude["pontos"],
         "saude_municipio": saude["por_distrito"],
         "municipio": contexto_municipal(),
+        "rompimento": rompimento(),
     }
 
     DIR_SITE_DADOS.mkdir(parents=True, exist_ok=True)
