@@ -492,11 +492,16 @@ function painelDistrito(pai, nome) {
       { cor, formato: e => num(e.valor), campo: "valor", margemEsq: 210,
         dica: e => `<b>${e.rotulo}</b><br>${num(e.valor)} matrículas` });
   }
-  const faltando = d.escolas.por_etapa.filter(e => e.valor === 0).map(e => e.rotulo);
+  const curtos = { "Educação infantil": "educação infantil", "Fundamental — anos iniciais": "anos iniciais do fundamental",
+                   "Fundamental — anos finais": "anos finais do fundamental", "Ensino médio": "ensino médio" };
+  const faltando = d.escolas.por_etapa.filter(e => e.valor === 0).map(e => curtos[e.rotulo] || e.rotulo.toLowerCase());
   if (faltando.length) {
+    const lista = faltando.length > 1
+      ? faltando.slice(0, -1).join(", ") + " nem " + faltando.at(-1)
+      : faltando[0];
     destaque(pai, "educacao",
-      `<strong>Não há oferta de ${faltando.join(", ").toLowerCase()}</strong> em escolas do distrito: ` +
-      "quem estuda nessas etapas precisa se deslocar para outro distrito.");
+      `<strong>Nenhuma escola do distrito oferece ${lista}.</strong> ` +
+      "Quem estuda nessas etapas precisa se deslocar para outro distrito.");
   }
   barrasHorizontais(bloco(gEsc, "educacao", "Infraestrutura das escolas",
     "% das escolas em atividade no distrito que têm cada item",
