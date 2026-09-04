@@ -5,7 +5,10 @@ from pathlib import Path
 RAIZ = Path(__file__).resolve().parent.parent
 DIR_RAW_CENSO = RAIZ / "data" / "raw" / "censo2022"
 DIR_RAW_MALHA = RAIZ / "data" / "raw" / "malha"
-DIR_RAW_EXTERNO = RAIZ / "data" / "raw" / "externo"
+DIR_RAW_INEP = RAIZ / "data" / "raw" / "inep"
+DIR_RAW_SETORES = RAIZ / "data" / "raw" / "setores"
+DIR_RAW_CENSO2010 = RAIZ / "data" / "raw" / "censo2010"
+DIR_RAW_CNES = RAIZ / "data" / "raw" / "cnes"
 DIR_PROCESSED = RAIZ / "data" / "processed"
 
 CD_MUNICIPIO_BRUMADINHO = "3109006"
