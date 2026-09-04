@@ -9,6 +9,7 @@ DIR_RAW_INEP = RAIZ / "data" / "raw" / "inep"
 DIR_RAW_SETORES = RAIZ / "data" / "raw" / "setores"
 DIR_RAW_CENSO2010 = RAIZ / "data" / "raw" / "censo2010"
 DIR_RAW_CNES = RAIZ / "data" / "raw" / "cnes"
+DIR_RAW_ANM = RAIZ / "data" / "raw" / "anm"
 DIR_PROCESSED = RAIZ / "data" / "processed"
 
 CD_MUNICIPIO_BRUMADINHO = "3109006"
