@@ -258,6 +258,10 @@ function mapa(pai, destaque) {
   const projecao = d3.geoMercator().fitExtent([[14, 14], [L - 14, altura - 14]], GEO);
   const caminho = d3.geoPath(projecao);
 
+  const idRecorte = "recorte-mapa-" + (destaque || "geral").replace(/\W/g, "");
+  s.append("clipPath").attr("id", idRecorte).append("rect")
+    .attr("x", 0).attr("y", 0).attr("width", L).attr("height", altura);
+
   s.selectAll("path").data(GEO.features).join("path")
     .attr("d", caminho)
     .attr("fill", d => {
@@ -284,8 +288,13 @@ function mapa(pai, destaque) {
     .attr("pointer-events", "none")
     .text(d => d.properties.nm_dist);
 
-  const pontos = DADOS.saude_pontos.filter(p => p.lat && p.lon);
-  s.append("g").selectAll("circle").data(pontos).join("circle")
+  // So entram os pontos que caem dentro de algum distrito: dois estabelecimentos
+  // tem coordenada fora do poligono municipal (erro de cadastro do CNES) e, como
+  // o SVG usa overflow visivel para os rotulos, seriam desenhados por cima do
+  // conteudo vizinho da pagina.
+  const pontos = DADOS.saude_pontos.filter(p => p.lat && p.lon && p.dentro);
+  s.append("g").attr("clip-path", `url(#${idRecorte})`)
+    .selectAll("circle").data(pontos).join("circle")
     .attr("cx", d => projecao([d.lon, d.lat])[0]).attr("cy", d => projecao([d.lon, d.lat])[1])
     .attr("r", 3).attr("fill", d => d.sus ? CORES.verde : CORES.texto3)
     .attr("fill-opacity", 0.85).attr("stroke", "#fff").attr("stroke-width", 0.6)

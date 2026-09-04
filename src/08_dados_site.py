@@ -25,6 +25,7 @@ from config import DIR_PROCESSED, DISTRITOS_ALVO, RAIZ
 
 DIR_SITE_DADOS = RAIZ / "site" / "dados"
 DISTRITOS = list(DISTRITOS_ALVO.values())
+FORA_DA_MALHA = {"sem coordenada", "fora dos limites do municipio"}
 
 FAIXAS_PIRAMIDE = [
     "0 a 4 anos", "5 a 9 anos", "10 a 14 anos", "15 a 19 anos", "20 a 24 anos",
@@ -236,6 +237,7 @@ def saude_cnes() -> dict:
                 "nome": r["nome_fantasia"],
                 "tipo": r["descricao_tipo_unidade"],
                 "distrito": r["distrito"],
+                "dentro": r["distrito"] not in FORA_DA_MALHA,
                 "sus": bool(r["sus"]),
                 "lat": r["latitude_estabelecimento_decimo_grau"],
                 "lon": r["longitude_estabelecimento_decimo_grau"],
