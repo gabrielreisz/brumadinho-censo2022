@@ -1,0 +1,3 @@
+distrito,cd_dist,ano,populacao,domicilios_permanentes,agua_rede_geral,esgoto_rede_geral,lixo_coletado,renda_ate_1_8_sm,renda_1_8_a_1_4_sm,renda_1_4_a_1_2_sm,renda_1_2_a_1_sm,renda_1_a_2_sm,renda_2_a_3_sm,renda_3_a_5_sm,renda_5_a_10_sm,renda_mais_10_sm,renda_sem_rendimento,pct_agua_rede_geral,pct_esgoto_rede_geral,pct_lixo_coletado
+Conceição de Itaguá,310900615,2010,6596.0,1938.0,1560.0,1581.0,1901.0,8.0,75.0,314.0,753.0,540.0,91.0,41.0,12.0,3.0,101.0,80.49535603715171,81.57894736842105,98.09081527347782
+São José do Paraopeba,310900625,2010,1314.0,408.0,270.0,12.0,350.0,10.0,50.0,110.0,161.0,53.0,7.0,6.0,2.0,0.0,10.0,66.17647058823529,2.9411764705882355,85.7843137254902
