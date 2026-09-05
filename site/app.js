@@ -963,7 +963,8 @@ function painelRompimento(pai) {
     barrasHorizontais(bloco(pai, "barragens", "Salário médio por setor",
       `Média mensal dos vínculos formais em Brumadinho, 2024. A média do município é ${reais(peso.media_municipio)}.`,
       "DataViva / Cedeplar-UFMG, a partir da RAIS."),
-      principais.map(x => ({ rotulo: x.nome, valor: x.salario_medio, pct: x.salario_medio })),
+      [...principais].sort((a, b) => b.salario_medio - a.salario_medio)
+        .map(x => ({ rotulo: x.nome, valor: x.salario_medio, pct: x.salario_medio })),
       { cor: x => x.rotulo === "Indústrias extrativas" ? CORES.vermelho : CORES.neutro,
         formato: x => reais(x.valor), campo: "valor", margemEsq: 230,
         dica: x => `<b>${x.rotulo}</b><br>${reais(x.valor)} por mês<br>${num(x.valor / peso.media_municipio, 2)}× a média do município` });
