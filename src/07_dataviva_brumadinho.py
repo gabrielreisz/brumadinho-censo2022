@@ -12,6 +12,7 @@ Estes dados sao contexto municipal, nao dos distritos.
 
 Gera, em data/processed/:
     dataviva_emprego_cnae_brumadinho.csv
+    dataviva_salario_cnae_brumadinho.csv
     dataviva_emprego_cnae_serie_brumadinho.csv
     dataviva_emprego_escolaridade_brumadinho.csv
     dataviva_salario_sexo_raca_brumadinho.csv
@@ -43,6 +44,7 @@ ARQUIVOS = {
     "dataviva_emprego_escolaridade_brumadinho.csv": "Emprego/escolaridade/emprego_escolaridade_municipio_2024.csv",
     "dataviva_salario_sexo_raca_brumadinho.csv": "Salario_Real/sexo_raca_cor/salario_real_sexo_raca_cor_municipio_2024.csv",
     "dataviva_salario_escolaridade_brumadinho.csv": "Salario_Real/escolaridade/salario_real_escolaridade_municipio_2024.csv",
+    "dataviva_salario_cnae_brumadinho.csv": "Salario_Real/CNAE/salario_real_CNAE_municipio_2024.csv",
 }
 
 
