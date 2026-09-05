@@ -290,3 +290,35 @@ A correção também inverteu uma leitura: com os números errados o emprego par
 despencar depois de 2019. Com os certos, **ele sobe** — 9.444 em 2018 para 10.721 em
 2019, com pico de 14.070 em 2022. A RAIS não diz o porquê, e obra de reparação,
 mineração em outras minas e o resto da economia não são separáveis nesse arquivo.
+
+## Erros encontrados na revisão da aba
+
+Uma passada conferindo variável por variável contra o dicionário do IBGE achou dois
+problemas que já estavam publicados:
+
+**Rótulos das faixas etárias dos óbitos.** O código usava "Menos de 1 ano", "1 a 4 anos"
+e "5 a 14 anos" nas três primeiras faixas. No dicionário, `V01228` é **0 a 4 anos**,
+`V01229` é **5 a 9** e `V01230` é **10 a 14**. As contagens estavam certas; os nomes,
+não. As demais faixas conferiam, assim como todas as outras faixas do projeto
+(alfabetização `V00644`–`V00656` e `V00748`–`V00760`, quilombolas `V03199`–`V03203`,
+cor ou raça `V01317`–`V01321`, período `V01264`–`V01270` e parentesco `V01209`–`V01212`).
+
+**Cobertura do detalhamento.** Somando os óbitos por idade dá 85, mas o total declarado
+em Conceição de Itaguá é 160. Por semestre dá 115. A proteção de confidencialidade do
+IBGE age justamente sobre células pequenas, então os gráficos mostravam parte dos óbitos
+parecendo mostrar todos. Agora o subtítulo de cada um diz quantos de quantos entram — e
+essa é a segunda das quatro ressalvas sobre o pico de 2019.
+
+Uma bateria de checagens automáticas (percentuais somando 100, taxas entre 0 e 100,
+alfabetizados nunca maiores que o total da faixa, população dos setores fechando com a
+do distrito, seções da CNAE somando o total do município, barragens por distrito somando
+o total) não apontou mais nada.
+
+## Peso setorial: massa salarial reconstruída
+
+O DataViva publica salário médio por classe da CNAE e vínculos por classe, mas não a
+massa salarial. Ela é reconstruída multiplicando um pelo outro no mesmo corte por sexo —
+o cálculo cobre 12.362 dos 12.390 vínculos; o resto são classes sem salário informado.
+
+Em Brumadinho, a indústria extrativa tem **22,4% dos vínculos e 36,7% da folha
+salarial**, com salário médio de R$ 6.513 contra R$ 3.977 do município.

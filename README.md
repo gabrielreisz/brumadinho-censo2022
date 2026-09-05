@@ -39,6 +39,9 @@ por padrão, e a escolha fica salva no navegador.
 - No município, **22,3% dos 12.390 vínculos formais estão na indústria extrativa**, e o
   salário médio de um homem branco ou amarelo (R$ 5.036) é 63% maior que o de uma mulher
   preta, parda ou indígena (R$ 3.084).
+- A **indústria extrativa responde por 22,4% dos vínculos formais de Brumadinho e por
+  36,7% da folha salarial do município**, com salário médio de R$ 6.513 — 1,64 vez a
+  média municipal, de R$ 3.977. É o maior setor nos dois recortes.
 - O **emprego formal de Brumadinho não caiu depois do rompimento**: eram 9.444 vínculos
   em 2018, 10.721 em 2019 e 14.070 em 2022, com pico da mineração em 2024 (2.767). A RAIS
   registra o vínculo, não o motivo — não dá para separar obra de reparação de mineração
@@ -216,6 +219,16 @@ python -m http.server 8000 --directory site
 O site é estático e sem build: HTML, CSS e um arquivo de JavaScript que carrega o D3 por
 CDN. Um push em `site/` republica pelo workflow em `.github/workflows/pages.yml`.
 
+## Uma nota sobre a aba do rompimento
+
+A aba sobre o rompimento da barragem abre delimitando o que os dados **não** dizem, e o
+pico de óbitos do 1º semestre de 2019 vem acompanhado das quatro razões pelas quais o
+dado não sustenta uma leitura de causa: o Censo não pergunta causa nem local da morte,
+só 115 dos 160 óbitos do distrito têm semestre informado, outro semestre da mesma série
+tem valor próximo (o da segunda onda da covid-19) e, numa base de poucas dezenas, uma
+diferença de dez óbitos cabe na variação normal. Ligar mortes a uma causa exigiria o
+SIM/DATASUS, que traz causa básica do óbito e só desce ao nível de município.
+
 ## Limitações conhecidas
 
 - **Renda atual por distrito não existe.** Em 2022 virou dado da amostra, publicado só
@@ -227,6 +240,10 @@ CDN. Um push em `site/` republica pelo workflow em `.github/workflows/pages.yml`
 - **Números pequenos.** São José do Paraopeba tem 1.388 moradores; em várias aberturas as
   células ficam com poucas unidades e o IBGE aplica proteção de confidencialidade.
   Percentuais sobre bases pequenas oscilam muito — leia as contagens absolutas junto.
+- **A proteção de confidencialidade come parte dos óbitos detalhados.** Dos 160 óbitos
+  declarados em Conceição de Itaguá, 115 têm semestre e 85 têm idade informada; em São
+  José do Paraopeba, 33 declarados contra 12 com semestre e 13 com idade. Os gráficos
+  dizem no subtítulo quantos de quantos entram.
 - **Comparar 2010 com 2022 exige cuidado.** As categorias de saneamento mudaram entre os
   censos e o número de domicílios cresceu nos dois distritos: um percentual que cai pode
   significar rede que não acompanhou o crescimento, não rede desfeita.
