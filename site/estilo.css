@@ -120,3 +120,6 @@ text { font-family: inherit; }
 }
 .aviso strong { color: var(--texto); }
 .aviso em { font-style: normal; text-decoration: underline; text-decoration-color: var(--neutro); }
+
+.aviso ol { margin: 10px 0 0; padding-left: 20px; }
+.aviso li { margin-bottom: 6px; }
