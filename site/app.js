@@ -376,7 +376,7 @@ function mapaBarragens(pai) {
   const pm = projecao([mina.lon, mina.lat]);
   g.append("path").attr("transform", `translate(${pm[0]},${pm[1]})`)
     .attr("d", d3.symbol().type(d3.symbolCross).size(150)())
-    .attr("fill", CORES.vermelho).attr("stroke", "#fff").attr("stroke-width", 1)
+    .attr("fill", CORES.texto).attr("stroke", "#fff").attr("stroke-width", 1)
     .attr("transform", `translate(${pm[0]},${pm[1]}) rotate(45)`)
     .on("mousemove", e => mostrarDica(e, "<b>Mina Córrego do Feijão</b><br>Posição aproximada, pelo centroide das " +
       `${mina.estruturas} estruturas que restam no cadastro da ANM<br>A barragem B1 rompeu em 25/01/2019`))
@@ -392,7 +392,7 @@ function mapaBarragens(pai) {
     .on("mouseleave", esconderDica);
 
   legenda(pai, [["Sem emergência", CORES.texto3], ["Emergência nível 1", CORES.amarelo],
-                ["Emergência nível 2", CORES.vermelho], ["Mina Córrego do Feijão", CORES.vermelho]]);
+                ["Emergência nível 2", CORES.vermelho], ["✕ Mina Córrego do Feijão", CORES.texto]]);
   return s;
 }
 
@@ -626,14 +626,18 @@ function painelDistrito(pai, nome) {
     { valor: num(ob.mulheres), rotulo: "Falecidas mulheres" },
   ]);
   const g3 = grade(pai);
-  barrasAgrupadas(bloco(g3, "mortalidade", "Óbitos por sexo e idade ao falecer", "Pessoas falecidas entre jan/2019 e jul/2022",
-    "Variáveis V01228–V01249, arquivo 'obitos'."),
+  barrasAgrupadas(bloco(g3, "mortalidade", "Óbitos por sexo e idade ao falecer",
+    `${num(ob.cobertura_idade)} dos ${num(ob.total)} óbitos declarados no distrito têm idade informada`,
+    "Variáveis V01228–V01249, arquivo 'obitos'. O restante não aparece aqui: em área pequena o IBGE suprime ou recodifica " +
+    "células com poucas ocorrências, então este gráfico mostra parte dos óbitos, não todos."),
     ob.por_idade.map(f => f.faixa),
     [{ nome: "Homens", cor: CORES.azul, valores: ob.por_idade.map(f => f.homens) },
      { nome: "Mulheres", cor: CORES.laranja, valores: ob.por_idade.map(f => f.mulheres) }]);
   colunas(bloco(g3, "mortalidade", "Óbitos por semestre",
-    "Dois eventos caem dentro da série: o rompimento da barragem da Mina Córrego do Feijão (25/01/2019) e a segunda onda da covid-19 (1º semestre de 2021)",
-    "Variáveis V01264–V01270, arquivo 'obitos'. O Censo registra o semestre do falecimento, não a causa: a série não permite atribuir mortes a nenhum dos dois eventos. A soma dos semestres é menor que o total de falecidos porque nem todo registro traz a data."),
+    `${num(ob.cobertura_periodo)} dos ${num(ob.total)} óbitos declarados têm semestre informado`,
+    "Variáveis V01264–V01270, arquivo 'obitos'. O Censo registra o semestre do falecimento, não a causa. Dois eventos caem " +
+    "dentro da série — o rompimento da barragem (25/01/2019) e a segunda onda da covid-19 (1º semestre de 2021) — e nenhum " +
+    "deles pode ser atribuído a estes números."),
     ob.por_periodo.map(p => ({ rotulo: p.periodo, valor: p.valor })), cor,
     { corPorItem: p => ["1º sem. 2019", "1º sem. 2021"].includes(p.rotulo) ? CORES.vermelho : cor });
 
@@ -846,16 +850,36 @@ function painelRompimento(pai) {
   });
 
   // Obitos
+  const obCI = DADOS.por_distrito["Conceição de Itaguá"].obitos;
+  const pico = obCI.por_periodo.reduce((a, b) => b.valor > a.valor ? b : a);
   secao(pai, "barragens", "Óbitos declarados no Censo, por semestre",
     "O rompimento foi no 1º semestre de 2019, dentro da janela que o Censo 2022 perguntou (jan/2019 a jul/2022).");
+
+  pai.append("div").attr("class", "aviso").attr("data-tema", "barragens").html(
+    `<strong>Como ler o pico de ${num(pico.valor)} óbitos no 1º semestre de 2019.</strong> ` +
+    "É o semestre mais alto da série em Conceição de Itaguá, e é o semestre do rompimento. Isso não faz dele um efeito do " +
+    "rompimento, por quatro razões que estão no próprio dado: " +
+    "<ol>" +
+    "<li><strong>O Censo não pergunta a causa nem o local da morte</strong> — só se um morador do domicílio faleceu e em que semestre.</li>" +
+    `<li><strong>Só ${num(obCI.cobertura_periodo)} dos ${num(obCI.total)} óbitos do distrito têm semestre informado.</strong> ` +
+    "O restante foi suprimido ou recodificado pela proteção de confidencialidade do IBGE, que age justamente sobre células pequenas — " +
+    "então a distribuição entre semestres é parcial.</li>" +
+    "<li><strong>Outro semestre da mesma série tem valor próximo</strong> — o 1º de 2021, o da segunda onda da covid-19. " +
+    "Um pico não identifica sua causa.</li>" +
+    "<li><strong>Números pequenos oscilam muito.</strong> Numa base de poucas dezenas, uma diferença de dez óbitos entre semestres " +
+    "cabe dentro da variação normal.</li>" +
+    "</ol>" +
+    "Para ligar mortes a uma causa seria preciso o SIM/DATASUS, que traz causa básica do óbito — e que só desce ao nível de município.");
+
   nomes.forEach(nome => {
     const ob = DADOS.por_distrito[nome].obitos;
     colunas(bloco(pai, "barragens", `Óbitos por semestre — ${nome}`,
-      `${num(ob.domicilios_com_obito)} domicílios declararam ao menos um óbito no período`,
-      "Variáveis V01264–V01270, arquivo 'obitos' do Censo 2022. O Censo pergunta se alguém que morava no domicílio faleceu " +
-      "e em que semestre — não a causa nem o local. A segunda onda da covid-19 também cai nesta série, no 1º semestre de 2021."),
+      `${num(ob.cobertura_periodo)} dos ${num(ob.total)} óbitos declarados têm semestre informado`,
+      "Variáveis V01264–V01270, arquivo 'obitos' do Censo 2022. Os dois semestres em destaque são o do rompimento (1º/2019) e " +
+      "o da segunda onda da covid-19 (1º/2021) — marcados para não sugerir uma explicação única, e não porque o dado atribua " +
+      "os óbitos a eles."),
       ob.por_periodo.map(p => ({ rotulo: p.periodo, valor: p.valor })), CORDIST[nome],
-      { corPorItem: p => p.rotulo === "1º sem. 2019" ? CORES.vermelho : CORDIST[nome] });
+      { corPorItem: p => ["1º sem. 2019", "1º sem. 2021"].includes(p.rotulo) ? CORES.vermelho : CORDIST[nome] });
   });
 
   // Agua
@@ -895,9 +919,9 @@ function painelRompimento(pai) {
 
   // Emprego
   if (r.emprego_extrativa.length) {
-    secao(pai, "barragens", "Emprego formal na mineração, antes e depois",
-      "Vínculos formais em Brumadinho na seção B da CNAE (indústrias extrativas). É dado municipal: a RAIS não desce a distrito. " +
-      "Ao contrário do que se poderia supor, o emprego formal do município cresceu depois de 2019.");
+    secao(pai, "barragens", "A mineração na economia do município",
+      "Vínculos formais em Brumadinho na seção B da CNAE (indústrias extrativas), antes e depois de 2019, e o peso do setor " +
+      "no emprego e na folha salarial do município. É dado municipal: a RAIS não desce a distrito.");
     barrasAgrupadas(bloco(pai, "barragens", "Vínculos formais em Brumadinho",
       "Indústrias extrativas e total do município",
       "DataViva / Cedeplar-UFMG, a partir da RAIS. As categorias de sexo e cor/raça se sobrepõem no arquivo de origem; " +
@@ -913,6 +937,36 @@ function painelRompimento(pai) {
       "% dos vínculos formais de Brumadinho na seção B da CNAE",
       "DataViva / Cedeplar-UFMG, a partir da RAIS."),
       r.emprego_extrativa.map(e => ({ rotulo: String(e.ano), valor: +e.pct.toFixed(1) })), CORES.vermelho, { sufixo: "%" });
+  }
+
+  const peso = r.peso_setorial;
+  if (peso && peso.extrativa) {
+    const ex = peso.extrativa;
+    cartoes(pai, "barragens", [
+      { valor: pct(ex.pct_vinculos), rotulo: "dos vínculos formais do município", nota: "indústrias extrativas, 2024" },
+      { valor: pct(ex.pct_massa), rotulo: "da massa salarial do município", nota: "indústrias extrativas, 2024" },
+      { valor: reais(ex.salario_medio), rotulo: "salário médio na mineração" },
+      { valor: num(peso.razao_extrativa, 2) + "×", rotulo: "a média do município", nota: reais(peso.media_municipio) + " por mês" },
+    ]);
+
+    const principais = peso.setores.slice(0, 10);
+    barrasAgrupadas(bloco(pai, "barragens", "Participação de cada setor no emprego e na folha salarial",
+      "Brumadinho, 2024 — os dez setores com maior massa salarial",
+      "DataViva / Cedeplar-UFMG, a partir da RAIS. A massa salarial não vem pronta no arquivo: é o salário médio de cada " +
+      "classe da CNAE multiplicado pelos vínculos daquela classe, no mesmo corte por sexo. O cálculo cobre " +
+      num(peso.cobertura_vinculos) + " dos " + num(DADOS.municipio.total_empregos) + " vínculos — o resto são classes sem salário informado."),
+      principais.map(x => x.nome),
+      [{ nome: "% dos vínculos", cor: CORES.neutro, valores: principais.map(x => +x.pct_vinculos.toFixed(1)) },
+       { nome: "% da massa salarial", cor: CORES.vermelho, valores: principais.map(x => +x.pct_massa.toFixed(1)) }],
+      { formato: v => pct(v), altura: 340 });
+
+    barrasHorizontais(bloco(pai, "barragens", "Salário médio por setor",
+      `Média mensal dos vínculos formais em Brumadinho, 2024. A média do município é ${reais(peso.media_municipio)}.`,
+      "DataViva / Cedeplar-UFMG, a partir da RAIS."),
+      principais.map(x => ({ rotulo: x.nome, valor: x.salario_medio, pct: x.salario_medio })),
+      { cor: x => x.rotulo === "Indústrias extrativas" ? CORES.vermelho : CORES.neutro,
+        formato: x => reais(x.valor), campo: "valor", margemEsq: 230,
+        dica: x => `<b>${x.rotulo}</b><br>${reais(x.valor)} por mês<br>${num(x.valor / peso.media_municipio, 2)}× a média do município` });
   }
 }
 

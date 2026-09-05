@@ -179,7 +179,8 @@ def domicilios(distrito: str) -> dict:
 def obitos(distrito: str) -> dict:
     """Obitos de moradores entre jan/2019 e jul/2022, como declarado no Censo."""
     df = _carregar("obitos")
-    faixas = ["Menos de 1 ano", "1 a 4 anos", "5 a 14 anos", "15 a 19 anos", "20 a 24 anos",
+    # Conferido no dicionario do IBGE: V01228 e "0 a 4 anos", nao "menos de 1 ano"
+    faixas = ["0 a 4 anos", "5 a 9 anos", "10 a 14 anos", "15 a 19 anos", "20 a 24 anos",
               "25 a 29 anos", "30 a 39 anos", "40 a 49 anos", "50 a 59 anos",
               "60 a 69 anos", "70 anos ou mais"]
     cols_h = [f"V{n:05d}" for n in range(1228, 1239)]
@@ -193,13 +194,23 @@ def obitos(distrito: str) -> dict:
         "V01267": "2º sem. 2020", "V01268": "1º sem. 2021", "V01269": "2º sem. 2021",
         "V01270": "jan–jul 2022",
     }
+    por_periodo = [{"periodo": r, "valor": _num(df, distrito, c)} for c, r in periodos.items()]
+    total = _num(df, distrito, "V01226") + _num(df, distrito, "V01227")
+    com_idade = sum(f["homens"] + f["mulheres"] for f in por_idade)
+    com_periodo = sum(p["valor"] for p in por_periodo)
     return {
         "domicilios_com_obito": _num(df, distrito, "V01224"),
         "domicilios_sem_obito": _num(df, distrito, "V01225"),
         "homens": _num(df, distrito, "V01226"),
         "mulheres": _num(df, distrito, "V01227"),
+        "total": total,
         "por_idade": por_idade,
-        "por_periodo": [{"periodo": r, "valor": _num(df, distrito, c)} for c, r in periodos.items()],
+        "por_periodo": por_periodo,
+        # Boa parte dos registros nao traz idade nem data: em area pequena o IBGE
+        # suprime ou recodifica celulas com poucas ocorrencias. Sem essa cobertura
+        # explicita, os dois graficos parecem mostrar o total de obitos e nao mostram.
+        "cobertura_idade": com_idade,
+        "cobertura_periodo": com_periodo,
     }
 
 
@@ -364,6 +375,52 @@ def barragens() -> dict:
     }
 
 
+def peso_da_mineracao() -> dict:
+    """Participacao de cada setor no emprego e na massa salarial de Brumadinho.
+
+    A massa salarial nao vem pronta: e reconstruida multiplicando o salario
+    medio de cada classe da CNAE pelo numero de vinculos daquela classe, no
+    mesmo corte por sexo (o unico que cobre todos os vinculos)."""
+    grupos = ["Homem - Total", "Mulher - Total"]
+    chave = ["Classe CNAE (5 dígitos)", "Sexo e Raça/Cor"]
+
+    salarios = pd.read_csv(DIR_PROCESSED / "dataviva_salario_cnae_brumadinho.csv")
+    salarios = salarios[(salarios["Indicador"] == "Média do Salário Real")
+                        & (salarios["Sexo e Raça/Cor"].isin(grupos))]
+    empregos = pd.read_csv(DIR_PROCESSED / "dataviva_emprego_cnae_brumadinho.csv")
+    empregos = empregos[empregos["Sexo e Raça/Cor"].isin(grupos)]
+
+    juncao = (empregos[chave + ["Valor", "Seção CNAE (1 dígito)"]].rename(columns={"Valor": "vinculos"})
+              .merge(salarios[chave + ["Valor"]].rename(columns={"Valor": "salario"}), on=chave, how="inner"))
+    juncao["massa"] = juncao["vinculos"] * juncao["salario"]
+
+    setores = juncao.groupby("Seção CNAE (1 dígito)").agg(
+        vinculos=("vinculos", "sum"), massa=("massa", "sum")).reset_index()
+    total_vinculos = setores["vinculos"].sum()
+    total_massa = setores["massa"].sum()
+    media_municipio = total_massa / total_vinculos if total_vinculos else 0
+
+    lista = [
+        {
+            "secao": r["Seção CNAE (1 dígito)"],
+            "nome": SECOES_CNAE.get(r["Seção CNAE (1 dígito)"], r["Seção CNAE (1 dígito)"]),
+            "vinculos": float(r["vinculos"]),
+            "pct_vinculos": 100 * r["vinculos"] / total_vinculos,
+            "pct_massa": 100 * r["massa"] / total_massa,
+            "salario_medio": r["massa"] / r["vinculos"] if r["vinculos"] else 0,
+        }
+        for _, r in setores.sort_values("massa", ascending=False).iterrows()
+    ]
+    extrativa = next((x for x in lista if x["secao"] == "B"), None)
+    return {
+        "setores": lista,
+        "media_municipio": media_municipio,
+        "extrativa": extrativa,
+        "razao_extrativa": extrativa["salario_medio"] / media_municipio if extrativa and media_municipio else None,
+        "cobertura_vinculos": float(total_vinculos),
+    }
+
+
 def _distancia_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     raio, rad = 6371.0, math.pi / 180
     a = (math.sin((lat2 - lat1) * rad / 2) ** 2
@@ -422,6 +479,8 @@ def rompimento() -> dict:
     por_ano = equipes["ano"].value_counts().sort_index()
     saude_mental = equipes[equipes["tipo_equipe"].str.contains("SAUDE MENTAL", na=False)]
 
+    peso = peso_da_mineracao()
+
     caminho_serie = DIR_PROCESSED / "dataviva_emprego_cnae_serie_brumadinho.csv"
     emprego = []
     if caminho_serie.exists():
@@ -448,6 +507,7 @@ def rompimento() -> dict:
             for _, r in saude_mental.iterrows()
         ],
         "emprego_extrativa": emprego,
+        "peso_setorial": peso,
     }
 
 
